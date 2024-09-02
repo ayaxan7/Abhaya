@@ -18,4 +18,5 @@
     <string name="registered_already_login_here">Registered Already? Login Here!</string>
     <string name="safety_tips">Safety Tips</string>
     <string name="emergency_contacts">Emergency Contacts</string>
+    <string name="logout">Logout</string>
 </resources>
