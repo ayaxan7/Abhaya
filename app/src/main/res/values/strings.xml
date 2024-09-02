@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">SOS</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="login">Login</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="don_t_have_an_account_register_here">Don\'t have an account?Register here!</string>
+    <string name="register">Register</string>
+    <string name="registered_already_login_here">Registered Already? Login Here!</string>
+    <string name="safety_tips">Safety Tips</string>
+    <string name="emergency_contacts">Emergency Contacts</string>
+</resources>

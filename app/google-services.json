@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "445936672141",
+    "project_id": "deleted-project-6d75e",
+    "storage_bucket": "deleted-project-6d75e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:445936672141:android:2dd599a37f50ffe4cdf1c4",
+        "android_client_info": {
+          "package_name": "eu.tutorials.sos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_B3s4qZcQQ02nwQxvO-1_OXkB_EDIhDk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
