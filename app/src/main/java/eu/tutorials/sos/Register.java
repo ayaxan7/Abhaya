@@ -1,5 +1,4 @@
 package eu.tutorials.sos;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -65,16 +64,18 @@ public class Register extends AppCompatActivity {
             email1 = String.valueOf(email.getText()).trim();
             password1 = String.valueOf(password.getText()).trim();
             phone1 = String.valueOf(phone.getText()).trim();
-
+            btn_register.setVisibility(View.INVISIBLE);
             if (name1.isEmpty() || email1.isEmpty() || password1.isEmpty() || phone1.isEmpty()) {
                 Toast.makeText(Register.this, "Enter all fields", Toast.LENGTH_SHORT).show();
                 bar.setVisibility(View.GONE);
+                btn_register.setVisibility(View.VISIBLE);
                 return;
             }
 
             if (password1.length() < 6) {
                 Toast.makeText(Register.this, "Password should be at least 6 characters", Toast.LENGTH_SHORT).show();
                 bar.setVisibility(View.GONE);
+                btn_register.setVisibility(View.VISIBLE);
                 return;
             }
 

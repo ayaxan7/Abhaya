@@ -1,6 +1,8 @@
 package eu.tutorials.sos.ui.home;
 
 import android.Manifest;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -8,16 +10,15 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.auth.FirebaseAuth;
@@ -46,9 +47,50 @@ public class HomeFragment extends Fragment {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
         Button sosButton = binding.sosButton;
-        sosButton.setOnClickListener(v -> sendSos());
+
+        // Add touch listener for the shrinking and bouncing effect
+        sosButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        // Shrink the button when pressed
+                        animateShrink(v);
+                        break;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        // Bounce back to original size when released
+                        animateBounceBack(v);
+                        sendSos();
+                        break;
+                }
+                return true;
+            }
+        });
 
         return root;
+    }
+
+    private void animateShrink(View view) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", 1.0f, 0.8f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", 1.0f, 0.8f);
+        scaleX.setDuration(150);
+        scaleY.setDuration(150);
+
+        AnimatorSet shrinkSet = new AnimatorSet();
+        shrinkSet.playTogether(scaleX, scaleY);
+        shrinkSet.start();
+    }
+
+    private void animateBounceBack(View view) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", 0.8f, 1.2f, 1.0f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", 0.8f, 1.2f, 1.0f);
+        scaleX.setDuration(300);
+        scaleY.setDuration(300);
+
+        AnimatorSet bounceBackSet = new AnimatorSet();
+        bounceBackSet.playTogether(scaleX, scaleY);
+        bounceBackSet.start();
     }
 
     private void sendSos() {
