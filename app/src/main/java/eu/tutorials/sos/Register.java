@@ -60,7 +60,7 @@ public class Register extends AppCompatActivity {
         name = findViewById(R.id.name);
         email = findViewById(R.id.email);
         password = findViewById(R.id.password);
-        phone = findViewById(R.id.phone);
+
         btn_register = findViewById(R.id.btn_register);
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
@@ -105,7 +105,6 @@ public class Register extends AppCompatActivity {
                                     Map<String, Object> userData = new HashMap<>();
                                     userData.put("name", name1);
                                     userData.put("email", email1);
-                                    userData.put("phone", phone1);
                                     userData.put("uid", user.getUid());
 
                                     // Store user data in Firestore

@@ -1,0 +1,10 @@
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">192.168.97.97</domain>
+    </domain-config>
+    <!-- Optionally allow cleartext traffic to localhost -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="TODO">localhost</domain>
+        <domain includeSubdomains="TODO">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

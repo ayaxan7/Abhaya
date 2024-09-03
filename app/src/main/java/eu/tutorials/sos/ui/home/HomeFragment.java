@@ -1,5 +1,4 @@
 package eu.tutorials.sos.ui.home;
-
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -9,8 +8,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
@@ -42,12 +43,7 @@ public class HomeFragment extends Fragment {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
         Button sosButton = binding.sosButton;
-        sosButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendSos();
-            }
-        });
+        sosButton.setOnClickListener(v -> sendSos());
 
         return root;
     }
@@ -55,12 +51,9 @@ public class HomeFragment extends Fragment {
     private void sendSos() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            String name = user.getDisplayName();
-            String email = user.getEmail();
             Date timestamp = new Date();
 
             if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // Request the permission
                 ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
                 return;
             }
@@ -70,29 +63,37 @@ public class HomeFragment extends Fragment {
                         if (location != null) {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
+                            Log.i("SOS", "Location obtained: Lat=" + latitude + " Long=" + longitude);
 
-                            // Send the data to the web server
-                            sendToServer(name, email, latitude, longitude, timestamp);
+                            // Send the data to the deployed server
+                            sendToServer(latitude, longitude, timestamp);
+                        } else {
+                            Toast.makeText(getContext(), "Unable to obtain location. Try again.", Toast.LENGTH_LONG).show();
                         }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("SOS", "Error getting location", e);
+                        Toast.makeText(getContext(), "Error getting location. Try again.", Toast.LENGTH_LONG).show();
                     });
+        } else {
+            Log.e("SOS", "User is not authenticated");
+            Toast.makeText(getContext(), "User is not authenticated. Please log in.", Toast.LENGTH_LONG).show();
         }
     }
 
-    private void sendToServer(String name, String email, double latitude, double longitude, Date timestamp) {
+    private void sendToServer(double latitude, double longitude, Date timestamp) {
         new Thread(() -> {
             try {
-                URL url = new URL("https://yourserver.com/api/sos"); // Replace with your server URL
+                URL url = new URL("https://sih-backend-8bsr.onrender.com/api/data"); // Replace with your deployed server's URL
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
                 conn.setDoOutput(true);
-
+                // Create JSON object with the required format
                 JSONObject json = new JSONObject();
-                json.put("name", name);
-                json.put("email", email);
-                json.put("latitude", latitude);
                 json.put("longitude", longitude);
-                json.put("timestamp", timestamp.toString());
+                json.put("latitude", latitude);
+                json.put("time", timestamp.toString());
 
                 try (OutputStream os = conn.getOutputStream()) {
                     os.write(json.toString().getBytes("UTF-8"));
@@ -100,13 +101,34 @@ public class HomeFragment extends Fragment {
                 }
 
                 int responseCode = conn.getResponseCode();
-                Log.i("SOS", "Response Code: " + responseCode);
+                Log.i("SOS", "Server Response Code: " + responseCode);
+                if (responseCode == 200) {
+                    Log.i("SOS", "SOS sent successfully");
+                } else {
+                    Log.e("SOS", "Failed to send SOS. Response Code: " + responseCode);
+                }
+
+                // Log the JSON data that was sent
+                Log.i("SOS", "Data sent: " + json.toString());
+
                 conn.disconnect();
 
             } catch (Exception e) {
                 Log.e("SOS", "Error sending SOS", e);
             }
         }).start();
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                sendSos();
+            } else {
+                Toast.makeText(getContext(), "Location permission denied. Cannot send SOS.", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     @Override
