@@ -1,5 +1,8 @@
 package eu.tutorials.sos.ui.home;
+
 import android.Manifest;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -65,8 +68,13 @@ public class HomeFragment extends Fragment {
                             double longitude = location.getLongitude();
                             Log.i("SOS", "Location obtained: Lat=" + latitude + " Long=" + longitude);
 
+                            // Retrieve name and phone from SharedPreferences
+                            SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+                            String name = sharedPreferences.getString("name", "");
+                            String phone = sharedPreferences.getString("phone", "");
+
                             // Send the data to the deployed server
-                            sendToServer(latitude, longitude, timestamp);
+                            sendToServer(name, phone, latitude, longitude, timestamp);
                         } else {
                             Toast.makeText(getContext(), "Unable to obtain location. Try again.", Toast.LENGTH_LONG).show();
                         }
@@ -81,7 +89,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private void sendToServer(double latitude, double longitude, Date timestamp) {
+    private void sendToServer(String name, String phone, double latitude, double longitude, Date timestamp) {
         new Thread(() -> {
             try {
                 URL url = new URL("https://sih-backend-8bsr.onrender.com/api/data"); // Replace with your deployed server's URL
@@ -91,15 +99,15 @@ public class HomeFragment extends Fragment {
                 conn.setDoOutput(true);
                 // Create JSON object with the required format
                 JSONObject json = new JSONObject();
-                json.put("longitude", longitude);
                 json.put("latitude", latitude);
+                json.put("longitude", longitude);
+                json.put("name", name);
+                json.put("phoneNo", phone);
                 json.put("time", timestamp.toString());
-
                 try (OutputStream os = conn.getOutputStream()) {
                     os.write(json.toString().getBytes("UTF-8"));
                     os.flush();
                 }
-
                 int responseCode = conn.getResponseCode();
                 Log.i("SOS", "Server Response Code: " + responseCode);
                 if (responseCode == 200) {
@@ -118,7 +126,6 @@ public class HomeFragment extends Fragment {
             }
         }).start();
     }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
