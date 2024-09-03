@@ -46,14 +46,7 @@
     <!-- Phone Number Input -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/phone"
-            android:hint="Phone number"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="phone"/>
-    </com.google.android.material.textfield.TextInputLayout>
+        android:layout_height="wrap_content"/>
 
     <!-- Password Input -->
     <com.google.android.material.textfield.TextInputLayout
@@ -81,12 +74,12 @@
         android:layout_marginTop="20dp"/>
 
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:id="@+id/login"
-        android:focusable="true"
-        android:text="@string/registered_already_login_here"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
+        android:clickable="true"
+        android:focusable="true"
         android:gravity="center"
-        android:clickable="true" />
+        android:text="@string/registered_already_login_here" />
 </LinearLayout>
