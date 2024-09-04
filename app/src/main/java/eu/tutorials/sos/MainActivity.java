@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -40,7 +41,7 @@ import eu.tutorials.sos.databinding.ActivityMainBinding;
 public class MainActivity extends AppCompatActivity {
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
-    private FirebaseAuth mAuth; // Firebase Authentication instance
+    private FirebaseAuth mAuth;
     private FusedLocationProviderClient fusedLocationClient;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -51,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Initialize Firebase Auth
+        // Initialize Firebase Auth and FusedLocationProviderClient
         mAuth = FirebaseAuth.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -59,16 +60,10 @@ public class MainActivity extends AppCompatActivity {
         checkLocationPermission();
 
         setSupportActionBar(binding.appBarMain.toolbar);
-        binding.appBarMain.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendSos();
-            }
-        });
+        binding.appBarMain.fab.setOnClickListener(view -> sendSos());
 
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
-        // Passing each menu ID as a set of Ids because each menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow)
                 .setOpenableLayout(drawer)
@@ -76,33 +71,43 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+
+        // Handle intent from the SOS widget
+        handleWidgetIntent(getIntent());
+        // Access the NavigationView
+
+
+        // Inflate the header view
+        View headerView = navigationView.getHeaderView(0);
+
+        // Find the TextViews in the header
+        TextView navUserName = headerView.findViewById(R.id.textView);
+        TextView navUserPhone = headerView.findViewById(R.id.textView2);
+
+        // Access SharedPreferences
+        SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+        String userName = sharedPreferences.getString("name", "User Name");
+        String userPhone = sharedPreferences.getString("phone", "Phone Number");
+
+        // Set the TextViews with user data
+        navUserName.setText(userName);
+        navUserPhone.setText(userPhone);
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        // Handle item selection
         if (item.getItemId() == R.id.action_settings) {
             logout();
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    private void logout() {
-        // Sign out from Firebase
-        mAuth.signOut();
-        // Redirect to Login screen
-        Intent intent = new Intent(MainActivity.this, Login.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        finish();  // Finish the current activity so the user cannot return to it
     }
 
     @Override
@@ -114,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkLocationPermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // Request location permission
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
         }
     }
@@ -150,8 +154,8 @@ public class MainActivity extends AppCompatActivity {
 
                             // Retrieve name and phone from SharedPreferences
                             SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
-                            String name = sharedPreferences.getString("name", "");
-                            String phone = sharedPreferences.getString("phone", "");
+                            String name = sharedPreferences.getString("name", "Anonymous");
+                            String phone = sharedPreferences.getString("phone", "XXXXXXXXXX");
 
                             // Send the data to the deployed server
                             sendToServer(name, phone, latitude, longitude, timestamp);
@@ -172,18 +176,17 @@ public class MainActivity extends AppCompatActivity {
     private void sendToServer(String name, String phone, double latitude, double longitude, Date timestamp) {
         new Thread(() -> {
             try {
-                URL url = new URL("https://sih-backend-8bsr.onrender.com/api/data"); // Replace with your deployed server's URL
+                URL url = new URL("https://sih-backend-8bsr.onrender.com/api/data");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
                 conn.setDoOutput(true);
 
-                // Create JSON object with the required format
                 JSONObject json = new JSONObject();
                 json.put("latitude", latitude);
                 json.put("longitude", longitude);
-                json.put("name", "Anonymous");
-                json.put("phoneNo", "XXXXXXXXXX");
+                json.put("name", name); // Use the retrieved name
+                json.put("phoneNo", phone); // Use the retrieved phone
                 json.put("time", timestamp.toString());
 
                 try (OutputStream os = conn.getOutputStream()) {
@@ -200,14 +203,26 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("MainActivity", "Failed to send SOS. Response Code: " + responseCode);
                 }
 
-                // Log the JSON data that was sent
                 Log.i("MainActivity", "Data sent: " + json.toString());
-
                 conn.disconnect();
 
             } catch (Exception e) {
                 Log.e("MainActivity", "Error sending SOS", e);
             }
         }).start();
+    }
+
+    private void handleWidgetIntent(Intent intent) {
+        if (intent != null && "SEND_SOS".equals(intent.getAction())) {
+            sendSos(); // Trigger the SOS action when the intent is received
+        }
+    }
+
+    private void logout() {
+        mAuth.signOut();
+        Intent intent = new Intent(MainActivity.this, Login.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
     }
 }
