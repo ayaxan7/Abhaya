@@ -1,5 +1,4 @@
 package eu.tutorials.sos;
-
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
@@ -37,13 +36,11 @@ import java.net.URL;
 import java.util.Date;
 
 import eu.tutorials.sos.databinding.ActivityMainBinding;
-
 public class MainActivity extends AppCompatActivity {
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
     private FirebaseAuth mAuth;
     private FusedLocationProviderClient fusedLocationClient;
-
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
 
     @Override
@@ -151,14 +148,13 @@ public class MainActivity extends AppCompatActivity {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
                             Log.i("MainActivity", "Location obtained: Lat=" + latitude + " Long=" + longitude);
-
                             // Retrieve name and phone from SharedPreferences
                             SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
-                            String name = sharedPreferences.getString("name", "Anonymous");
-                            String phone = sharedPreferences.getString("phone", "XXXXXXXXXX");
+                            String name = sharedPreferences.getString("name", "Unknown");
+                            String phone = sharedPreferences.getString("phone", "9999999999");
 
                             // Send the data to the deployed server
-                            sendToServer(name, phone, latitude, longitude, timestamp);
+                            sendToServer("Anonyomous", "XXXXXXXXXX", latitude, longitude, timestamp);
                         } else {
                             Toast.makeText(this, "Unable to obtain location. Try again.", Toast.LENGTH_LONG).show();
                         }
