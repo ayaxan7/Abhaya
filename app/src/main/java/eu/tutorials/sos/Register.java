@@ -1,4 +1,6 @@
 package eu.tutorials.sos;
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -31,6 +33,7 @@ public class Register extends AppCompatActivity {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
             Intent intent = new Intent(Register.this, MainActivity.class);
+            Log.d("Registration Successful", "User already logged in");
             startActivity(intent);
             finish();
             return;
@@ -59,12 +62,11 @@ public class Register extends AppCompatActivity {
 
         btn_register.setOnClickListener(v -> {
             bar.setVisibility(View.VISIBLE);
-            String name1, email1, password1, phone1;
-            name1 = String.valueOf(name.getText()).trim();
-            email1 = String.valueOf(email.getText()).trim();
-            password1 = String.valueOf(password.getText()).trim();
-            phone1 = String.valueOf(phone.getText()).trim();
-            btn_register.setVisibility(View.INVISIBLE);
+            String name1 = name.getText().toString().trim();
+            String email1 = email.getText().toString().trim();
+            String password1 = password.getText().toString().trim();
+            String phone1 = phone.getText().toString().trim();
+
             if (name1.isEmpty() || email1.isEmpty() || password1.isEmpty() || phone1.isEmpty()) {
                 Toast.makeText(Register.this, "Enter all fields", Toast.LENGTH_SHORT).show();
                 bar.setVisibility(View.GONE);
@@ -80,29 +82,42 @@ public class Register extends AppCompatActivity {
             }
 
             mAuth.createUserWithEmailAndPassword(email1, password1)
-                    .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            bar.setVisibility(View.GONE);
-                            if (task.isSuccessful()) {
-                                // Registration successful
-                                FirebaseUser user = mAuth.getCurrentUser();
-                                if (user != null) {
-                                    // Save user data locally
-                                    SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-                                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                                    editor.putString("name", name1);
-                                    editor.putString("phone", phone1);
-                                    editor.apply();
+                    .addOnCompleteListener(task -> {
+                        bar.setVisibility(View.GONE);
+                        if (task.isSuccessful()) {
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            if (user != null) {
+                                // Save user data locally
+                                SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                editor.putString("name", name1);
+                                editor.putString("phone", phone1);
+                                editor.apply();
+                                Toast.makeText(Register.this, "Registration Successful.", Toast.LENGTH_SHORT).show();
 
-                                    Toast.makeText(Register.this, "Registration Successful.", Toast.LENGTH_SHORT).show();
-                                    Intent intent = new Intent(Register.this, MainActivity.class);
-                                    startActivity(intent);
-                                    finish();
-                                }
-                            } else {
-                                Toast.makeText(Register.this, "Registration failed.", Toast.LENGTH_SHORT).show();
+                                // Sign in and get the token
+                                mAuth.signInWithEmailAndPassword(email1, password1)
+                                        .addOnCompleteListener(signInTask -> {
+                                            if (signInTask.isSuccessful()) {
+                                                FirebaseUser signedInUser = FirebaseAuth.getInstance().getCurrentUser();
+                                                if (signedInUser != null) {
+                                                    signedInUser.getIdToken(false).addOnCompleteListener(tokenTask -> {
+                                                        if (tokenTask.isSuccessful()) {
+                                                            String idToken = tokenTask.getResult().getToken();
+                                                            Log.d("Auth Token", "Token: " + idToken);
+                                                            // Use this token in your API request
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        });
+
+                                Intent intent = new Intent(Register.this, MainActivity.class);
+                                startActivity(intent);
+                                finish();
                             }
+                        } else {
+                            Toast.makeText(Register.this, "Registration failed.", Toast.LENGTH_SHORT).show();
                         }
                     });
         });
