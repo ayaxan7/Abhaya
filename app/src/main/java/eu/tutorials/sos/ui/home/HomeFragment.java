@@ -130,6 +130,7 @@ public class HomeFragment extends Fragment {
 
         public SendSosTask(String idToken, String name, String phone, double latitude, double longitude, Date timestamp) {
             this.idToken = idToken;
+            Log.d("SOS", "ID Token: " + idToken);
             this.name = name;
             this.phone = phone;
             this.latitude = latitude;

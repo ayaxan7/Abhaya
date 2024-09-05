@@ -9,19 +9,22 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.annotation.NonNull;
+
 import androidx.appcompat.app.AppCompatActivity;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Register extends AppCompatActivity {
     TextInputEditText name, email, password, phone;
     Button btn_register;
     FirebaseAuth mAuth;
+    FirebaseFirestore db;
     ProgressBar bar;
     TextView login;
 
@@ -49,9 +52,12 @@ public class Register extends AppCompatActivity {
         password = findViewById(R.id.password);
         phone = findViewById(R.id.phone);
         btn_register = findViewById(R.id.btn_register);
-        mAuth = FirebaseAuth.getInstance();
         bar = findViewById(R.id.bar);
         login = findViewById(R.id.login);
+
+        // Initialize Firebase Auth and Firestore
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         login.setOnClickListener(v -> {
             Intent intent = new Intent(Register.this, Login.class);
@@ -80,29 +86,51 @@ public class Register extends AppCompatActivity {
                 return;
             }
 
-            mAuth.signInWithEmailAndPassword(email1, password1)
-                    .addOnCompleteListener(signInTask -> {
-                        if (signInTask.isSuccessful()) {
-                            FirebaseUser signedInUser = FirebaseAuth.getInstance().getCurrentUser();
-                            if (signedInUser != null) {
-                                signedInUser.getIdToken(false).addOnCompleteListener(tokenTask -> {
-                                    if (tokenTask.isSuccessful()) {
-                                        String idToken = tokenTask.getResult().getToken();
-                                        Log.d("Auth Token", idToken);
+            mAuth.createUserWithEmailAndPassword(email1, password1)
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            if (user != null) {
+                                String userId = user.getUid();
 
-                                        // Save token locally
-                                        SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-                                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                                        editor.putString("authToken", idToken);
-                                        editor.apply();
+                                // Create a map of user data to store in Firestore
+                                Map<String, Object> userData = new HashMap<>();
+                                userData.put("name", name1);
+                                userData.put("phone", phone1);
+                                userData.put("email", email1);
 
-                                        // Use this token in your API request
-                                    }
-                                });
+
+                                // Save user data in Firestore under a document with the user's UID
+                                db.collection("users").document(userId)
+                                        .set(userData)
+                                        .addOnSuccessListener(aVoid -> {
+                                            Log.d("Firestore", "User data successfully written!");
+                                            Toast.makeText(Register.this, "Registration successful!", Toast.LENGTH_SHORT).show();
+
+                                            // Save token locally
+                                            SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+                                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                                            editor.putString("name", name1);
+                                            editor.putString("phone", phone1);
+                                            editor.apply();
+
+                                            Intent intent = new Intent(Register.this, MainActivity.class);
+                                            startActivity(intent);
+                                            finish();
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Log.w("Firestore", "Error writing user data", e);
+                                            Toast.makeText(Register.this, "Failed to save user data. Please try again.", Toast.LENGTH_SHORT).show();
+                                            bar.setVisibility(View.GONE);
+                                            btn_register.setVisibility(View.VISIBLE);
+                                        });
                             }
+                        } else {
+                            Toast.makeText(Register.this, "Authentication failed. " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            bar.setVisibility(View.GONE);
+                            btn_register.setVisibility(View.VISIBLE);
                         }
                     });
-
         });
     }
 }

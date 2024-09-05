@@ -53,5 +53,6 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation (libs.okhttp)
+    implementation(libs.okhttp)
     implementation (libs.volley)
 }

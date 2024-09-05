@@ -3,7 +3,6 @@ package eu.tutorials.sos;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -22,46 +21,39 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.StringRequest;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentSnapshot;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
-import java.util.Date;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
 import java.util.Date;
 
 import eu.tutorials.sos.databinding.ActivityMainBinding;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
-
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
     private FirebaseAuth mAuth;
     private FusedLocationProviderClient fusedLocationClient;
-    private StringRequest PostRequest;
-    private RequestQueue GetRequest;
+    private FirebaseFirestore firestore;
+    private OkHttpClient httpClient;
+    TextView navUserName;
+    TextView navUserPhone;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,13 +63,50 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         mAuth = FirebaseAuth.getInstance();
+        firestore = FirebaseFirestore.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        httpClient = new OkHttpClient();
 
         checkLocationPermission();
         setupToolbarAndNavigation();
         binding.appBarMain.fab.setOnClickListener(view -> sendSos());
         handleWidgetIntent(getIntent());
-        setupNavigationHeader();
+
+        // Fetch user data from Firestore and update the navigation header
+        updateNavigationHeader();
+    }
+
+    private void updateNavigationHeader() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            // Get the navigation view and header view
+            NavigationView navigationView = binding.navView;
+            View headerView = navigationView.getHeaderView(0);
+            navUserName = headerView.findViewById(R.id.textView);
+            navUserPhone = headerView.findViewById(R.id.textView2);
+
+            // Fetch user data from Firestore
+            firestore.collection("users").document(user.getUid()).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            String name = documentSnapshot.getString("name");
+                            String phone = documentSnapshot.getString("phone");
+
+                            // Update the TextViews with fetched data
+                            navUserName.setText(name != null ? name : "User Name");
+                            navUserPhone.setText(phone != null ? phone : "Phone Number");
+                        } else {
+                            Toast.makeText(MainActivity.this, "User data not found in Firestore.", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("MainActivity", "Failed to fetch user data", e);
+                        Toast.makeText(MainActivity.this, "Failed to fetch user data. Please try again.", Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            Log.e("MainActivity", "User is not authenticated");
+            Toast.makeText(MainActivity.this, "User is not authenticated. Please log in.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setupToolbarAndNavigation() {
@@ -150,11 +179,21 @@ public class MainActivity extends AppCompatActivity {
                             double longitude = location.getLongitude();
                             Log.i("MainActivity", "Location obtained: Lat=" + latitude + " Long=" + longitude);
 
-                            SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
-                            String name = sharedPreferences.getString("name", "Anonymous");
-                            String phone = sharedPreferences.getString("phone", "XXXXXXXXXX");
-
-                            sendToServer(name, phone, latitude, longitude, new Date());
+                            // Fetch user data from Firestore
+                            firestore.collection("users").document(user.getUid()).get()
+                                    .addOnSuccessListener(documentSnapshot -> {
+                                        if (documentSnapshot.exists()) {
+                                            String name = documentSnapshot.getString("name");
+                                            String phone = documentSnapshot.getString("phone");
+                                            sendToServer(name != null ? name : "Anonymous", phone != null ? phone : "XXXXXXXXXX", latitude, longitude, new Date());
+                                        } else {
+                                            Toast.makeText(MainActivity.this, "User data not found in Firestore.", Toast.LENGTH_SHORT).show();
+                                        }
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.e("MainActivity", "Failed to fetch user data", e);
+                                        Toast.makeText(MainActivity.this, "Failed to fetch user data. Please try again.", Toast.LENGTH_SHORT).show();
+                                    });
                         } else {
                             Toast.makeText(this, "Unable to obtain location. Try again.", Toast.LENGTH_LONG).show();
                         }
@@ -169,127 +208,75 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void sendToServer(String name, String phone, double latitude, double longitude, Date timestamp) {
-        new Thread(() -> {
-            final HttpURLConnection[] connHolder = new HttpURLConnection[1]; // Wrapper to hold the connection
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) {
+            Log.e("MainActivity", "User is not authenticated");
+            runOnUiThread(() -> Toast.makeText(MainActivity.this, "User is not authenticated.", Toast.LENGTH_LONG).show());
+            return;
+        }
 
-            try {
-                FirebaseUser user = mAuth.getCurrentUser();
-                if (user == null) {
-                    Log.e("MainActivity", "User is not authenticated");
-                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "User is not authenticated.", Toast.LENGTH_LONG).show());
+        // Retrieve ID token for authentication
+        user.getIdToken(true).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                String idToken = task.getResult().getToken();
+
+                // Create JSON object for the request body
+                JSONObject json = new JSONObject();
+                try {
+                    json.put("latitude", latitude);
+                    json.put("longitude", longitude);
+                    json.put("name", name);
+                    json.put("phoneNo", phone);
+                    json.put("time", timestamp.toString());
+                } catch (Exception e) {
+                    Log.e("MainActivity", "Failed to create JSON object", e);
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to create JSON object.", Toast.LENGTH_LONG).show());
                     return;
                 }
 
-                // Retrieve ID token for authentication
-                user.getIdToken(true).addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        String idToken = task.getResult().getToken();
-                        Log.i("MainActivity", "ID Token: " + idToken); // Log the ID Token
+                MediaType JSON = MediaType.get("application/json; charset=utf-8");
+                RequestBody requestBody = RequestBody.create(json.toString(), JSON);
 
-                        try {
-                            // Define the server URL
-                            URL url = new URL("https://sih-backend-8bsr.onrender.com/api/data");
-                            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                            connHolder[0] = conn; // Update the holder with the connection
-                            conn.setRequestMethod("POST");
-                            conn.setRequestProperty("Content-Type", "application/json; utf-8");
-                            conn.setRequestProperty("Authorization", "Bearer " + idToken);
-                            conn.setDoOutput(true);
+                Request request = new Request.Builder()
+                        .url("https://sih-backend-8bsr.onrender.com/api/data") // Replace with your endpoint URL
+                        .addHeader("Authorization", "Bearer " + idToken)
+                        .post(requestBody)
+                        .build();
 
-                            // Create the JSON payload
-                            JSONObject json = new JSONObject();
-                            json.put("latitude", latitude);
-                            json.put("longitude", longitude);
-                            json.put("name", name);
-                            json.put("phoneNo", phone);
-                            json.put("time", timestamp.toString());
-                            Log.i("MainActivity", "JSON Payload: " + json.toString()); // Log the JSON payload
+                httpClient.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                        Log.e("MainActivity", "Error sending SOS", e);
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Please try again.", Toast.LENGTH_LONG).show());
+                    }
 
-                            try (OutputStream os = conn.getOutputStream()) {
-                                try {
-                                    os.write(json.toString().getBytes("UTF-8"));
-                                    os.flush();
-                                } catch (UnsupportedEncodingException e) {
-                                    Log.e("MainActivity", "Unsupported Encoding: " + e.getMessage(), e);
-                                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Unsupported encoding error. Please try again.", Toast.LENGTH_LONG).show());
-                                    return;
-                                }
-                            }
-
-                            int responseCode = conn.getResponseCode();
-                            Log.i("MainActivity", "Server Response Code: " + responseCode);
-
-                            if (responseCode == HttpURLConnection.HTTP_OK) {
-                                Log.i("MainActivity", "SOS sent successfully");
-                                runOnUiThread(() -> Toast.makeText(MainActivity.this, "SOS sent successfully!", Toast.LENGTH_LONG).show());
-                            } else {
-                                Log.e("MainActivity", "Failed to send SOS. Response Code: " + responseCode);
-                                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Please try again.", Toast.LENGTH_LONG).show());
-                            }
-                        } catch (MalformedURLException e) {
-                            Log.e("MainActivity", "Malformed URL: " + e.getMessage(), e);
-                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Invalid URL format. Please try again.", Toast.LENGTH_LONG).show());
-                        } catch (ProtocolException e) {
-                            Log.e("MainActivity", "Protocol Error: " + e.getMessage(), e);
-                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Protocol error. Please try again.", Toast.LENGTH_LONG).show());
-                        } catch (IOException e) {
-                            Log.e("MainActivity", "I/O Error: " + e.getMessage(), e);
-                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Network error. Please check your connection and try again.", Toast.LENGTH_LONG).show());
-                        } catch (JSONException e) {
-                            Log.e("MainActivity", "JSON Error: " + e.getMessage(), e);
-                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Error creating JSON payload. Please try again.", Toast.LENGTH_LONG).show());
-                        } catch (Exception e) {
-                            Log.e("MainActivity", "Unexpected Error: " + e.getMessage(), e);
-                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Unexpected error occurred. Please try again.", Toast.LENGTH_LONG).show());
-                        } finally {
-                            if (connHolder[0] != null) {
-                                connHolder[0].disconnect();
-                            }
+                    @Override
+                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                        if (response.isSuccessful()) {
+                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "SOS sent successfully!", Toast.LENGTH_LONG).show());
+                        } else {
+                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Response: " + response.message(), Toast.LENGTH_LONG).show());
                         }
-                    } else {
-                        Log.e("MainActivity", "Failed to get ID token", task.getException());
-                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to authenticate. Please log in again.", Toast.LENGTH_LONG).show());
                     }
                 });
-            } catch (Exception e) {
-                Log.e("MainActivity", "Unexpected Error: " + e.getMessage(), e);
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Unexpected error occurred. Please try again.", Toast.LENGTH_LONG).show());
+            } else {
+                Log.e("MainActivity", "Failed to get ID token", task.getException());
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to get ID token. Please log in again.", Toast.LENGTH_LONG).show());
             }
-        }).start();
+        });
     }
-
-
-
-
-
 
 
     private void handleWidgetIntent(Intent intent) {
-        if (intent != null && "SEND_SOS".equals(intent.getAction())) {
-            sendSos();
-        }
-    }
-
-    private void setupNavigationHeader() {
-        NavigationView navigationView = binding.navView;
-        View headerView = navigationView.getHeaderView(0);
-
-        TextView navUserName = headerView.findViewById(R.id.textView);
-        TextView navUserPhone = headerView.findViewById(R.id.textView2);
-
-        SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-        String userName = sharedPreferences.getString("name", "User Name");
-        String userPhone = sharedPreferences.getString("phone", "Phone Number");
-
-        navUserName.setText(userName);
-        navUserPhone.setText(userPhone);
+        // Implement logic to handle intents from widgets here if needed
     }
 
     private void logout() {
         mAuth.signOut();
-        Intent intent = new Intent(MainActivity.this, Login.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+        Intent intent = new Intent(this, Login.class);
         finish();
+        startActivity(intent);
+        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+        // Redirect to login activity or handle logout action
     }
 }
