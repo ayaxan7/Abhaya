@@ -1,16 +1,11 @@
 package eu.tutorials.sos.ui.home;
-
 import android.Manifest;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -27,182 +22,179 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GetTokenResult;
 
 import org.json.JSONObject;
 
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Date;
 
 import eu.tutorials.sos.databinding.FragmentHomeBinding;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
     private FusedLocationProviderClient fusedLocationClient;
-    private HandlerThread handlerThread;
-    private Handler backgroundHandler;
+    private final OkHttpClient client = new OkHttpClient();
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
-
-        // Initialize the HandlerThread for background operations
-        handlerThread = new HandlerThread("SOSBackgroundThread");
-        handlerThread.start();
-        backgroundHandler = new Handler(handlerThread.getLooper());
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
         Button sosButton = binding.sosButton;
 
-        // Add touch listener for the shrinking and bouncing effect
-        sosButton.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        // Shrink the button when pressed
-                        animateShrink(v);
-                        break;
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        // Bounce back to original size when released
-                        animateBounceBack(v);
-                        sendSos();
-                        break;
-                }
-                return true;
+        sosButton.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    animateShrink(v);
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    animateBounceBack(v);
+                    sendSos();
+                    break;
             }
+            return true;
         });
 
         return root;
     }
 
     private void animateShrink(View view) {
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", 1.0f, 0.8f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", 1.0f, 0.8f);
-        scaleX.setDuration(150);
-        scaleY.setDuration(150);
-
-        AnimatorSet shrinkSet = new AnimatorSet();
-        shrinkSet.playTogether(scaleX, scaleY);
-        shrinkSet.start();
+        view.animate().scaleX(0.8f).scaleY(0.8f).setDuration(150).start();
     }
 
     private void animateBounceBack(View view) {
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", 0.8f, 1.2f, 1.0f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", 0.8f, 1.2f, 1.0f);
-        scaleX.setDuration(300);
-        scaleY.setDuration(300);
-
-        AnimatorSet bounceBackSet = new AnimatorSet();
-        bounceBackSet.playTogether(scaleX, scaleY);
-        bounceBackSet.start();
+        view.animate().scaleX(1.2f).scaleY(1.2f).setDuration(300)
+                .withEndAction(() -> view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start()).start();
     }
 
     private void sendSos() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            Date timestamp = new Date();
-
             if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
                 return;
             }
 
             fusedLocationClient.getLastLocation()
-                    .addOnSuccessListener(location -> {
+                    .addOnSuccessListener(getActivity(), location -> {
                         if (location != null) {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
                             Log.i("SOS", "Location obtained: Lat=" + latitude + " Long=" + longitude);
 
-                            // Retrieve name and phone from SharedPreferences
-                            SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+                            SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
                             String name = sharedPreferences.getString("name", "");
                             String phone = sharedPreferences.getString("phone", "");
 
-                            // Send the data to the deployed server
-                            backgroundHandler.post(() -> sendToServer(name, phone, latitude, longitude, timestamp));
+                            user.getIdToken(true)
+                                    .addOnCompleteListener(task -> {
+                                        if (task.isSuccessful()) {
+                                            String idToken = task.getResult().getToken();
+                                            new SendSosTask(idToken, name, phone, latitude, longitude, new Date()).execute();
+                                        } else {
+                                            Log.e("SOS", "Failed to get ID token", task.getException());
+                                            Toast.makeText(getContext(), "Failed to authenticate. Please try again.", Toast.LENGTH_LONG).show();
+                                        }
+                                    });
                         } else {
-                            showToast("Unable to obtain location. Try again.");
+                            Toast.makeText(getContext(), "Unable to obtain location. Try again.", Toast.LENGTH_LONG).show();
                         }
                     })
                     .addOnFailureListener(e -> {
                         Log.e("SOS", "Error getting location", e);
-                        showToast("Error getting location. Try again.");
+                        Toast.makeText(getContext(), "Error getting location. Try again.", Toast.LENGTH_LONG).show();
                     });
         } else {
             Log.e("SOS", "User is not authenticated");
-            showToast("User is not authenticated. Please log in.");
+            Toast.makeText(getContext(), "User is not authenticated. Please log in.", Toast.LENGTH_LONG).show();
         }
     }
 
-    private void sendToServer(String name, String phone, double latitude, double longitude, Date timestamp) {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            user.getIdToken(true).addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    String idToken = task.getResult().getToken();
-                    try {
-                        HttpURLConnection conn = setupHttpURLConnection(idToken);
+    private class SendSosTask extends AsyncTask<Void, Void, Boolean> {
+        private final String idToken;
+        private final String name;
+        private final String phone;
+        private final double latitude;
+        private final double longitude;
+        private final Date timestamp;
 
-                        // Create JSON object with the required format
-                        JSONObject json = new JSONObject();
-                        json.put("latitude", latitude);
-                        json.put("longitude", longitude);
-                        json.put("name", name);
-                        json.put("phoneNo", phone);
-                        json.put("time", timestamp.toString());
+        public SendSosTask(String idToken, String name, String phone, double latitude, double longitude, Date timestamp) {
+            this.idToken = idToken;
+            this.name = name;
+            this.phone = phone;
+            this.latitude = latitude;
+            this.longitude = longitude;
+            this.timestamp = timestamp;
+        }
 
-                        // Write JSON data to output stream
-                        try (OutputStream os = conn.getOutputStream()) {
-                            os.write(json.toString().getBytes("UTF-8"));
-                            os.flush();
-                        }
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            try {
+                JSONObject json = new JSONObject();
+                json.put("latitude", latitude);
+                json.put("longitude", longitude);
+                json.put("name", name);
+                json.put("phoneNo", phone);
+                json.put("time", timestamp.toString());
 
-                        int responseCode = conn.getResponseCode();
-                        if (responseCode == 200) {
-                            Log.i("SOS", "SOS sent successfully");
-                        } else {
-                            Log.e("SOS", "Failed to send SOS. Response Code: " + responseCode);
-                        }
+                MediaType JSON = MediaType.get("application/json; charset=utf-8");
+                RequestBody body = RequestBody.create(json.toString(), JSON);
 
-                        conn.disconnect();
-                    } catch (Exception e) {
-                        Log.e("SOS", "Error sending SOS", e);
+                Request request = new Request.Builder()
+                        .url("https://sih-backend-8bsr.onrender.com/api/data")
+                        .addHeader("Authorization", "Bearer " + idToken)
+                        .post(body)
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (response.isSuccessful()) {
+                        Log.i("SOS", "SOS sent successfully");
+                        return true;
+                    } else {
+                        Log.e("SOS", "Failed to send SOS. Response Code: " + response.code());
+                        return false;
                     }
-                } else {
-                    Log.e("SOS", "Error getting authentication token", task.getException());
-                    showToast("Error getting authentication token. Try again.");
                 }
-            });
-        } else {
-            Log.e("SOS", "User is not authenticated");
-            showToast("User is not authenticated. Please log in.");
+            } catch (Exception e) {
+                Log.e("SOS", "Error sending SOS", e);
+                return false;
+            }
         }
-    }
 
-    private HttpURLConnection setupHttpURLConnection(String idToken) throws Exception {
-        URL url = new URL("https://sih-backend-8bsr.onrender.com/api/data");
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-        conn.setRequestProperty("Authorization", "Bearer " + idToken);
-        conn.setDoOutput(true);
-        return conn;
-    }
-
-    private void showToast(String message) {
-        new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show());
+        @Override
+        protected void onPostExecute(Boolean success) {
+            if (success) {
+                Toast.makeText(getContext(), "SOS sent successfully", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getContext(), "Failed to send SOS", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        handlerThread.quitSafely();
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                sendSos();
+            } else {
+                Toast.makeText(getContext(), "Location permission denied. Cannot send SOS.", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }
