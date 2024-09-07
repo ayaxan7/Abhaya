@@ -78,7 +78,11 @@ public class MainActivity extends AppCompatActivity {
 
         // Fetch user data from Firestore and update the navigation header
         updateNavigationHeader();
+        Intent intent = new Intent(this, LocationService.class);
+        intent.setAction("REQUEST_LOCATION_UPDATE");
+        startService(intent);
     }
+
 
     private void fetchFcmToken() {
         FirebaseMessaging.getInstance().getToken()
