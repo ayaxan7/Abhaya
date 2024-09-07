@@ -11,8 +11,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 public class register_btn extends AppCompatActivity {
-    private AppCompatButton loginEmailButton;
-    private AppCompatButton loginGoogleButton;
+    AppCompatButton loginEmailButton;
+    AppCompatButton loginGoogleButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
