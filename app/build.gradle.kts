@@ -56,4 +56,7 @@ dependencies {
     implementation (libs.okhttp)
     implementation(libs.okhttp)
     implementation (libs.volley)
+    implementation (libs.play.services.auth)
+    implementation (libs.firebase.messaging)
+
 }

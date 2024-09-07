@@ -3,6 +3,7 @@ package eu.tutorials.sos;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import com.google.firebase.messaging.FirebaseMessaging;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -43,6 +44,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+
 public class MainActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private AppBarConfiguration mAppBarConfiguration;
@@ -65,25 +67,76 @@ public class MainActivity extends AppCompatActivity {
         firestore = FirebaseFirestore.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         httpClient = new OkHttpClient();
-        Intent intent = new Intent(this, LocationService.class);
-        startService(intent);
+        fetchFcmToken();
+        // Start the LocationService immediately when the app is opened
+        startLocationService();
+
         checkLocationPermission();
         setupToolbarAndNavigation();
         binding.appBarMain.fab.setOnClickListener(view -> sendSos());
         handleWidgetIntent(getIntent());
+
         // Fetch user data from Firestore and update the navigation header
         updateNavigationHeader();
-        // Start the LocationService
-        startLocationService();
     }
+
+    private void fetchFcmToken() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w("MainActivity", "Fetching FCM token failed", task.getException());
+                        return;
+                    }
+
+                    // Get the FCM token
+                    String token = task.getResult();
+                    Log.i("MainActivity", "FCM Token: " + token);
+
+                    // Optionally, send this token to your server or store it in Firestore
+                    FirebaseUser user = mAuth.getCurrentUser();
+                    if (user != null) {
+                        updateFcmTokenInFirestore(user.getUid(), token);
+                    }
+                });
+    }
+
+    private void updateFcmTokenInFirestore(String uid, String token) {
+        firestore.collection("users").document(uid)
+                .update("fcmToken", token)
+                .addOnSuccessListener(aVoid -> Log.i("MainActivity", "FCM token updated in Firestore"))
+                .addOnFailureListener(e -> Log.e("MainActivity", "Failed to update FCM token in Firestore", e));
+    }
+
     private void startLocationService() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            // Send the location immediately upon opening the MainActivity
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(this, location -> {
+                        if (location != null) {
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            if (user != null) {
+                                double latitude = location.getLatitude();
+                                double longitude = location.getLongitude();
+                                Log.i("MainActivity", "Location obtained: Lat=" + latitude + " Long=" + longitude);
+
+                                // Update Firestore with the current location and timestamp
+                                updateFirestoreLocation(user.getUid(), latitude, longitude, new Date());
+                            } else {
+                                Log.e("MainActivity", "User is not authenticated");
+                                Toast.makeText(this, "User is not authenticated. Please log in.", Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    })
+                    .addOnFailureListener(e -> Log.e("MainActivity", "Error getting location", e));
+
+            // Start the LocationService
             Intent intent = new Intent(this, LocationService.class);
             startService(intent);
         } else {
             Toast.makeText(this, "Location permission is required to start location service.", Toast.LENGTH_LONG).show();
         }
     }
+
     private void updateNavigationHeader() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
@@ -215,92 +268,59 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "User is not authenticated. Please log in.", Toast.LENGTH_LONG).show();
         }
     }
+
     private void sendToServer(String name, String phone, double latitude, double longitude, Date timestamp) {
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null) {
-            Log.e("MainActivity", "User is not authenticated");
-            runOnUiThread(() -> Toast.makeText(MainActivity.this, "User is not authenticated.", Toast.LENGTH_LONG).show());
-            return;
-        }
+        String url = "https://your-server-url/endpoint";
+        RequestBody formBody = new FormBody.Builder()
+                .add("name", name)
+                .add("phone", phone)
+                .add("latitude", String.valueOf(latitude))
+                .add("longitude", String.valueOf(longitude))
+                .add("timestamp", timestamp.toString())
+                .build();
 
-        // Retrieve ID token for authentication
-        user.getIdToken(true).addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                String idToken = task.getResult().getToken();
+        Request request = new Request.Builder()
+                .url(url)
+                .post(formBody)
+                .build();
 
-                // Create JSON object for the request body
-                JSONObject json = new JSONObject();
-                try {
-                    json.put("latitude", latitude);
-                    json.put("longitude", longitude);
-                    json.put("name", name);
-                    json.put("phoneNo", phone);
-                    json.put("time", timestamp.getTime()); // Use epoch time in milliseconds
-                } catch (Exception e) {
-                    Log.e("MainActivity", "Failed to create JSON object", e);
-                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to create JSON object.", Toast.LENGTH_LONG).show());
-                    return;
+        httpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.e("MainActivity", "Error sending SOS request", e);
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Try again.", Toast.LENGTH_LONG).show());
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    Log.i("MainActivity", "SOS request sent successfully");
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "SOS sent successfully!", Toast.LENGTH_LONG).show());
+                } else {
+                    Log.e("MainActivity", "Failed to send SOS request. Server responded with code: " + response.code());
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Try again.", Toast.LENGTH_LONG).show());
                 }
-
-                MediaType JSON = MediaType.get("application/json; charset=utf-8");
-                RequestBody requestBody = RequestBody.create(json.toString(), JSON);
-
-                Request request = new Request.Builder()
-                        .url("https://sih-backend-8bsr.onrender.com/api/data") // Replace with your endpoint URL
-                        .addHeader("Authorization", "Bearer " + idToken)
-                        .post(requestBody)
-                        .build();
-
-                httpClient.newCall(request).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                        Log.e("MainActivity", "Error sending SOS", e);
-                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Please try again.", Toast.LENGTH_LONG).show());
-                    }
-
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                        if (response.isSuccessful()) {
-                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "SOS sent successfully!", Toast.LENGTH_LONG).show());
-
-                            // Update Firestore with the new location and timestamp
-                            updateFirestoreLocation(user.getUid(), latitude, longitude, timestamp);
-                        } else {
-                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Response: " + response.message(), Toast.LENGTH_LONG).show());
-                        }
-                    }
-                });
-            } else {
-                Log.e("MainActivity", "Failed to get ID token", task.getException());
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to get ID token. Please log in again.", Toast.LENGTH_LONG).show());
             }
         });
     }
 
-    private void updateFirestoreLocation(String userId, double latitude, double longitude, Date timestamp) {
-        firestore.collection("users").document(userId)
-                .update(
-                        "latitude", latitude,
-                        "longitude", longitude,
-                        "timestamp", timestamp.getTime() // Store epoch time in milliseconds
-                )
-                .addOnSuccessListener(aVoid -> Log.i("MainActivity", "Location and timestamp updated in Firestore"))
-                .addOnFailureListener(e -> Log.e("MainActivity", "Failed to update location and timestamp in Firestore", e));
-    }
-
-
-
-
-    private void handleWidgetIntent(Intent intent) {
-        // Implement logic to handle intents from widgets here if needed
+    private void updateFirestoreLocation(String uid, double latitude, double longitude, Date timestamp) {
+        firestore.collection("users").document(uid)
+                .update("latitude", latitude, "longitude", longitude, "timestamp", timestamp)
+                .addOnSuccessListener(aVoid -> Log.i("MainActivity", "Location updated in Firestore"))
+                .addOnFailureListener(e -> Log.e("MainActivity", "Failed to update location in Firestore", e));
     }
 
     private void logout() {
-        mAuth.signOut();
-        Intent intent = new Intent(this, Login.class);
-        finish();
+        FirebaseAuth.getInstance().signOut();
+        Intent intent = new Intent(MainActivity.this, Login.class);
         startActivity(intent);
-        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
-        // Redirect to login activity or handle logout action
+        finish();
+    }
+
+    private void handleWidgetIntent(Intent intent) {
+        if (intent != null && intent.getBooleanExtra("fromWidget", false)) {
+            sendSos();
+        }
     }
 }

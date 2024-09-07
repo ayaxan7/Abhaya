@@ -10,10 +10,12 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 public class register_btn extends AppCompatActivity {
     AppCompatButton loginEmailButton;
-    AppCompatButton loginGoogleButton;
-
+    AppCompatButton loginDigiLockerButton;
+    FirebaseAuth mauth;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,20 +28,19 @@ public class register_btn extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        mauth=FirebaseAuth.getInstance();
+        if(mauth.getCurrentUser()!=null){
+            Intent intent = new Intent(register_btn.this, MainActivity.class);
+            startActivity(intent);
+            finish();
+        }
 
         // Initialize buttons
         loginEmailButton = findViewById(R.id.loginEmailButton);
-        loginGoogleButton = findViewById(R.id.loginGoogleButton);
-
         // Set onClick listeners
         loginEmailButton.setOnClickListener(v -> {
             Intent intent = new Intent(register_btn.this, Login.class);
             startActivity(intent);
-        });
-
-        loginGoogleButton.setOnClickListener(v -> {
-            // Handle Google login button click
-            // For example, start a Google login activity
         });
     }
 }
