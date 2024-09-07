@@ -262,6 +262,9 @@ public class MainActivity extends AppCompatActivity {
                     public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                         if (response.isSuccessful()) {
                             runOnUiThread(() -> Toast.makeText(MainActivity.this, "SOS sent successfully!", Toast.LENGTH_LONG).show());
+
+                            // Update Firestore with the new location and timestamp
+                            updateFirestoreLocation(user.getUid(), latitude, longitude, timestamp);
                         } else {
                             runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Response: " + response.message(), Toast.LENGTH_LONG).show());
                         }
@@ -273,6 +276,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void updateFirestoreLocation(String userId, double latitude, double longitude, Date timestamp) {
+        firestore.collection("users").document(userId)
+                .update(
+                        "latitude", latitude,
+                        "longitude", longitude,
+                        "timestamp", timestamp.getTime() // Store epoch time in milliseconds
+                )
+                .addOnSuccessListener(aVoid -> Log.i("MainActivity", "Location and timestamp updated in Firestore"))
+                .addOnFailureListener(e -> Log.e("MainActivity", "Failed to update location and timestamp in Firestore", e));
+    }
+
 
 
 
