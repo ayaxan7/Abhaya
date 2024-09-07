@@ -8,8 +8,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -22,6 +23,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Material3.Light"
         tools:targetApi="31" >
+
         <service
             android:name=".LocationService"
             android:exported="false"
@@ -30,26 +32,31 @@
 
         <activity
             android:name=".register_btn"
-            android:exported="false" />
-        <activity
-            android:name=".Login"
-            android:exported="true" >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".Login"
+            android:exported="false" >
+        </activity>
+
         <activity
             android:name=".Register"
             android:exported="false" >
         </activity>
+
         <activity
             android:name=".MainActivity"
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/Theme.Material3.Light.NoActionBar" >
-        </activity> <!-- Add this section for the SOS widget -->
+        </activity>
+
+        <!-- Add this section for the SOS widget -->
         <receiver
             android:name=".SosWidgetProvider"
             android:exported="true" >
@@ -61,7 +68,11 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_info" />
         </receiver>
-        <receiver android:name=".AppLaunchReceiver" android:enabled="true" android:exported="false">
+
+        <receiver
+            android:name=".AppLaunchReceiver"
+            android:enabled="true"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <category android:name="android.intent.category.DEFAULT"/>
