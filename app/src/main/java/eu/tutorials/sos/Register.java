@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.Spinner;  // Import Spinner
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Register extends AppCompatActivity {
-    TextInputEditText name, email, password, phone;
+    TextInputEditText name, email, password, phone, gender;
     Button btn_register;
     FirebaseAuth mAuth;
     FirebaseFirestore db;
@@ -51,6 +52,7 @@ public class Register extends AppCompatActivity {
         email = findViewById(R.id.email);
         password = findViewById(R.id.password);
         phone = findViewById(R.id.phone);
+        gender = findViewById(R.id.gender); // Add this line
         btn_register = findViewById(R.id.btn_register);
         bar = findViewById(R.id.bar);
         login = findViewById(R.id.login);
@@ -71,8 +73,9 @@ public class Register extends AppCompatActivity {
             String email1 = email.getText().toString().trim();
             String password1 = password.getText().toString().trim();
             String phone1 = phone.getText().toString().trim();
+            String gender1 = gender.getText().toString().trim(); // Add this line
 
-            if (name1.isEmpty() || email1.isEmpty() || password1.isEmpty() || phone1.isEmpty()) {
+            if (name1.isEmpty() || email1.isEmpty() || password1.isEmpty() || phone1.isEmpty() || gender1.isEmpty()) {
                 Toast.makeText(Register.this, "Enter all fields", Toast.LENGTH_SHORT).show();
                 bar.setVisibility(View.GONE);
                 btn_register.setVisibility(View.VISIBLE);
@@ -85,7 +88,6 @@ public class Register extends AppCompatActivity {
                 btn_register.setVisibility(View.VISIBLE);
                 return;
             }
-
             mAuth.createUserWithEmailAndPassword(email1, password1)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
@@ -98,8 +100,7 @@ public class Register extends AppCompatActivity {
                                 userData.put("name", name1);
                                 userData.put("phone", phone1);
                                 userData.put("email", email1);
-
-
+                                userData.put("gender", gender1); // Add this line
                                 // Save user data in Firestore under a document with the user's UID
                                 db.collection("users").document(userId)
                                         .set(userData)
@@ -112,6 +113,7 @@ public class Register extends AppCompatActivity {
                                             SharedPreferences.Editor editor = sharedPreferences.edit();
                                             editor.putString("name", name1);
                                             editor.putString("phone", phone1);
+                                            editor.putString("gender", gender1); // Add this line
                                             editor.apply();
 
                                             Intent intent = new Intent(Register.this, MainActivity.class);
@@ -134,3 +136,4 @@ public class Register extends AppCompatActivity {
         });
     }
 }
+

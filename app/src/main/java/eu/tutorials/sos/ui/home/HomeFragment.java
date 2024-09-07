@@ -23,6 +23,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GetTokenResult;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.json.JSONObject;
 
@@ -76,7 +77,6 @@ public class HomeFragment extends Fragment {
         view.animate().scaleX(1.2f).scaleY(1.2f).setDuration(300)
                 .withEndAction(() -> view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start()).start();
     }
-
     private void sendSos() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
@@ -90,6 +90,8 @@ public class HomeFragment extends Fragment {
                         if (location != null) {
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
+                            long timestamp = System.currentTimeMillis(); // Use current time in millis
+
                             Log.i("SOS", "Location obtained: Lat=" + latitude + " Long=" + longitude);
 
                             SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
@@ -100,7 +102,19 @@ public class HomeFragment extends Fragment {
                                     .addOnCompleteListener(task -> {
                                         if (task.isSuccessful()) {
                                             String idToken = task.getResult().getToken();
-                                            new SendSosTask(idToken, name, phone, latitude, longitude, new Date()).execute();
+                                            new SendSosTask(idToken, name, phone, latitude, longitude, timestamp).execute();
+
+                                            // Update Firestore with the latest location and timestamp
+                                            FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+                                            String uid = user.getUid();
+
+                                            firestore.collection("users").document(uid)
+                                                    .update("latitude", latitude,
+                                                            "longitude", longitude,
+                                                            "timestamp", timestamp)
+                                                    .addOnSuccessListener(aVoid -> Log.d("SOS", "Location updated in Firestore"))
+                                                    .addOnFailureListener(e -> Log.e("SOS", "Failed to update location in Firestore", e));
+
                                         } else {
                                             Log.e("SOS", "Failed to get ID token", task.getException());
                                             Toast.makeText(getContext(), "Failed to authenticate. Please try again.", Toast.LENGTH_LONG).show();
@@ -120,22 +134,24 @@ public class HomeFragment extends Fragment {
         }
     }
 
+
+
     private class SendSosTask extends AsyncTask<Void, Void, Boolean> {
         private final String idToken;
         private final String name;
         private final String phone;
         private final double latitude;
         private final double longitude;
-        private final Date timestamp;
+        private final long timestamp; // Use long for timestamp
 
-        public SendSosTask(String idToken, String name, String phone, double latitude, double longitude, Date timestamp) {
+        public SendSosTask(String idToken, String name, String phone, double latitude, double longitude, long timestamp) {
             this.idToken = idToken;
             Log.d("SOS", "ID Token: " + idToken);
             this.name = name;
             this.phone = phone;
             this.latitude = latitude;
             this.longitude = longitude;
-            this.timestamp = timestamp;
+            this.timestamp = timestamp; // Use long
         }
 
         @Override
@@ -146,7 +162,7 @@ public class HomeFragment extends Fragment {
                 json.put("longitude", longitude);
                 json.put("name", name);
                 json.put("phoneNo", phone);
-                json.put("time", timestamp.toString());
+                json.put("time", timestamp); // Use long timestamp
 
                 MediaType JSON = MediaType.get("application/json; charset=utf-8");
                 RequestBody body = RequestBody.create(json.toString(), JSON);
@@ -181,6 +197,7 @@ public class HomeFragment extends Fragment {
             }
         }
     }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

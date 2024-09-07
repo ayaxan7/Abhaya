@@ -43,7 +43,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-
 public class MainActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private AppBarConfiguration mAppBarConfiguration;
@@ -66,16 +65,25 @@ public class MainActivity extends AppCompatActivity {
         firestore = FirebaseFirestore.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         httpClient = new OkHttpClient();
-
+        Intent intent = new Intent(this, LocationService.class);
+        startService(intent);
         checkLocationPermission();
         setupToolbarAndNavigation();
         binding.appBarMain.fab.setOnClickListener(view -> sendSos());
         handleWidgetIntent(getIntent());
-
         // Fetch user data from Firestore and update the navigation header
         updateNavigationHeader();
+        // Start the LocationService
+        startLocationService();
     }
-
+    private void startLocationService() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            Intent intent = new Intent(this, LocationService.class);
+            startService(intent);
+        } else {
+            Toast.makeText(this, "Location permission is required to start location service.", Toast.LENGTH_LONG).show();
+        }
+    }
     private void updateNavigationHeader() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
@@ -227,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
                     json.put("longitude", longitude);
                     json.put("name", name);
                     json.put("phoneNo", phone);
-                    json.put("time", timestamp.toString());
+                    json.put("time", timestamp.getTime()); // Use epoch time in milliseconds
                 } catch (Exception e) {
                     Log.e("MainActivity", "Failed to create JSON object", e);
                     runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to create JSON object.", Toast.LENGTH_LONG).show());
@@ -265,6 +273,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
 
 
     private void handleWidgetIntent(Intent intent) {

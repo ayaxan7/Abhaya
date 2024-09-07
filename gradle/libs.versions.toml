@@ -18,6 +18,7 @@ googleGmsGoogleServices = "4.4.2"
 playServicesLocation = "21.3.0"
 firebaseFirestore = "25.1.0"
 volley = "1.2.1"
+annotation = "1.8.2"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -37,6 +38,7 @@ firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
+annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
