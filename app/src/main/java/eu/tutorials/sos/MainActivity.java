@@ -7,6 +7,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,6 +17,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -55,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     private OkHttpClient httpClient;
     TextView navUserName;
     TextView navUserPhone;
-
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,15 +77,28 @@ public class MainActivity extends AppCompatActivity {
         setupToolbarAndNavigation();
         binding.appBarMain.fab.setOnClickListener(view -> sendSos());
         handleWidgetIntent(getIntent());
-
+        if (NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+            // Notifications are enabled
+            Log.i("MainActivity", "Notification permission granted");
+        } else {
+            // Request notification permission
+            requestNotificationPermission();
+        }
         // Fetch user data from Firestore and update the navigation header
         updateNavigationHeader();
         Intent intent = new Intent(this, LocationService.class);
         intent.setAction("REQUEST_LOCATION_UPDATE");
         startService(intent);
     }
+    private void requestNotificationPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)) {
+            // Provide additional explanation to the user if needed
+            Toast.makeText(this, "This app requires notification permissions to function properly.", Toast.LENGTH_LONG).show();
+        }
 
-
+        // Request the notification permission
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST_CODE);
+    }
     private void fetchFcmToken() {
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
@@ -112,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startLocationService() {
+        // Check if the location permission is granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             // Send the location immediately upon opening the MainActivity
             fusedLocationClient.getLastLocation()
@@ -137,9 +153,11 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, LocationService.class);
             startService(intent);
         } else {
-            Toast.makeText(this, "Location permission is required to start location service.", Toast.LENGTH_LONG).show();
+            // Request location permission if not granted
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
         }
     }
+
 
     private void updateNavigationHeader() {
         FirebaseUser user = mAuth.getCurrentUser();
@@ -220,14 +238,18 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, start location service
+                startLocationService();
                 Toast.makeText(this, "Location permission granted", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Location permission denied. Some features may not work.", Toast.LENGTH_LONG).show();
             }
         }
     }
+
 
     private void sendSos() {
         FirebaseUser user = mAuth.getCurrentUser();
@@ -309,19 +331,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateFirestoreLocation(String uid, double latitude, double longitude, Date timestamp) {
-        firestore.collection("users").document(uid)
-                .update("latitude", latitude, "longitude", longitude, "timestamp", timestamp)
-                .addOnSuccessListener(aVoid -> Log.i("MainActivity", "Location updated in Firestore"))
-                .addOnFailureListener(e -> Log.e("MainActivity", "Failed to update location in Firestore", e));
-    }
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            firestore.collection("users").document(user.getUid()).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            String name = documentSnapshot.getString("name");
+                            String phone = documentSnapshot.getString("phone");
+                            navUserName.setText(name != null ? name : "User Name");
+                            navUserPhone.setText(phone != null ? phone : "Phone Number");
+                        } else {
+                            Toast.makeText(MainActivity.this, "User data not found in Firestore.", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("MainActivity", "Failed to fetch user data", e);
+                        Toast.makeText(MainActivity.this, "Failed to fetch user data. Please try again.", Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            Log.e("MainActivity", "User is not authenticated");
+            Toast.makeText(this, "User is not authenticated. Please log in.", Toast.LENGTH_SHORT).show();
+        }
 
+    }
     private void logout() {
         FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(MainActivity.this, Login.class);
         startActivity(intent);
         finish();
     }
-
     private void handleWidgetIntent(Intent intent) {
         if (intent != null && intent.getBooleanExtra("fromWidget", false)) {
             sendSos();
