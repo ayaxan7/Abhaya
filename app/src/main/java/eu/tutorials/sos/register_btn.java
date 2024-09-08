@@ -2,6 +2,7 @@ package eu.tutorials.sos;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,6 +11,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class register_btn extends AppCompatActivity {
@@ -41,6 +43,10 @@ public class register_btn extends AppCompatActivity {
         loginEmailButton.setOnClickListener(v -> {
             Intent intent = new Intent(register_btn.this, Login.class);
             startActivity(intent);
+        });
+        loginDigiLockerButton=findViewById(R.id.loginGoogleButton);
+        loginDigiLockerButton.setOnClickListener(v -> {
+            Snackbar.make(findViewById(android.R.id.content), "Coming Soon...", Snackbar.LENGTH_SHORT).show();
         });
     }
 }
