@@ -14,12 +14,12 @@
     <fragment
         android:id="@+id/nav_gallery"
         android:name="eu.tutorials.sos.ui.gallery.GalleryFragment"
-        android:label="@string/menu_gallery"
+        android:label="Safety tips"
         tools:layout="@layout/fragment_gallery" />
 
     <fragment
         android:id="@+id/nav_slideshow"
         android:name="eu.tutorials.sos.ui.slideshow.SlideshowFragment"
-        android:label="@string/menu_slideshow"
+        android:label="Emergency Contacts"
         tools:layout="@layout/fragment_slideshow" />
 </navigation>

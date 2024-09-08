@@ -107,18 +107,17 @@ public class Register extends AppCompatActivity {
                                         .addOnSuccessListener(aVoid -> {
                                             Log.d("Firestore", "User data successfully written!");
                                             Toast.makeText(Register.this, "Registration successful!", Toast.LENGTH_SHORT).show();
-
                                             // Save token locally
                                             SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
                                             SharedPreferences.Editor editor = sharedPreferences.edit();
                                             editor.putString("name", name1);
                                             editor.putString("phone", phone1);
-                                            editor.putString("gender", gender1); // Add this line
                                             editor.apply();
 
                                             Intent intent = new Intent(Register.this, MainActivity.class);
                                             startActivity(intent);
                                             finish();
+                                            return;
                                         })
                                         .addOnFailureListener(e -> {
                                             Log.w("Firestore", "Error writing user data", e);
