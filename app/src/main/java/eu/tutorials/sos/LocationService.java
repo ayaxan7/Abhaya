@@ -68,7 +68,6 @@
                     .setSmallIcon(R.drawable.app_icon) // Replace with your icon
                     .setOngoing(true) // Makes the notification non-dismissible
                     .build();
-
             startForeground(NOTIFICATION_ID, notification);
         }
 

@@ -94,14 +94,11 @@ public class Register extends AppCompatActivity {
                             FirebaseUser user = mAuth.getCurrentUser();
                             if (user != null) {
                                 String userId = user.getUid();
-
-                                // Create a map of user data to store in Firestore
                                 Map<String, Object> userData = new HashMap<>();
                                 userData.put("name", name1);
                                 userData.put("phone", phone1);
                                 userData.put("email", email1);
-                                userData.put("gender", gender1); // Add this line
-                                // Save user data in Firestore under a document with the user's UID
+                                userData.put("gender", gender1);
                                 db.collection("users").document(userId)
                                         .set(userData)
                                         .addOnSuccessListener(aVoid -> {
