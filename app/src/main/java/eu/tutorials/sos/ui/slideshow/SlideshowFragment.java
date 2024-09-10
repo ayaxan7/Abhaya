@@ -59,13 +59,11 @@ public class SlideshowFragment extends Fragment {
         EventChangeListener();
         return root;
     }
-
     private void EventChangeListener() {
         Log.d("Firestore Data", "Fetching data...");
 
         db.collection("friends")
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
-
                     @Override
                     public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
                         Log.d("Firestore Data", "Fetching data...");
@@ -87,7 +85,6 @@ public class SlideshowFragment extends Fragment {
                                 Log.i("Firestore Data", "Document ID: " + id);
                                 Map<String, Object> friendMap = dc.getDocument().getData();
                                 Log.i("Firestore Data", "Document Data: " + friendMap.toString());
-
                                 String phone = (String) friendMap.get("Phone");
                                 String name = (String) friendMap.get("name");
                                 contactsList.add(new friends(phone, name));
@@ -101,6 +98,7 @@ public class SlideshowFragment extends Fragment {
                     }
                 });
     }
+
 
 
 
