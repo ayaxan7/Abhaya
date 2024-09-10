@@ -21,11 +21,11 @@ android {
                 "proguard-rules.pro"
             )
         }
-        buildTypes {
+
             create("customDebugType") {
-                isDebuggable = true
+                isDebuggable = false
             }
-        }
+
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -37,7 +37,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)
