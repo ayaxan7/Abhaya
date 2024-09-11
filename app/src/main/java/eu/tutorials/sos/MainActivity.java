@@ -324,6 +324,7 @@ public class MainActivity extends AppCompatActivity {
                         null);
                 if (phoneCursor != null && phoneCursor.moveToFirst()) {
                     String contactPhone = phoneCursor.getString(phoneCursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    contactPhone = contactPhone.replaceAll("\\s+", "");
                     phoneCursor.close();
                     FirebaseFirestore db = FirebaseFirestore.getInstance();
                     Map<String, Object> friend = new HashMap<>();
@@ -338,8 +339,6 @@ public class MainActivity extends AppCompatActivity {
                             .addOnFailureListener(e -> {
                                 Toast.makeText(MainActivity.this, "Error adding contact: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                             });
-                    // Use contactName and contactPhone as needed
-                    Toast.makeText(this, "Selected Contact: " + contactName + " - " + contactPhone, Toast.LENGTH_LONG).show();
                 }
 
             }
