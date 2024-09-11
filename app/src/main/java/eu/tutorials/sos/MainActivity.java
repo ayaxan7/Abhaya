@@ -2,6 +2,9 @@ package eu.tutorials.sos;
 import android.Manifest;
 
 import android.content.Intent;
+
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.messaging.FirebaseMessaging;
 import android.content.pm.PackageManager;
@@ -325,16 +328,56 @@ public class MainActivity extends AppCompatActivity {
                 if (phoneCursor != null && phoneCursor.moveToFirst()) {
                     String contactPhone = phoneCursor.getString(phoneCursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
                     contactPhone = contactPhone.replaceAll("\\s+", "");
+                    if(contactPhone.startsWith("+91")){
+                        contactPhone=contactPhone.substring(3);
+                    }
+                    Log.d("ContactPhoneAfter", "Modified phone number: " + contactPhone);
                     phoneCursor.close();
                     FirebaseFirestore db = FirebaseFirestore.getInstance();
+                    FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                    FirebaseUser currentUser = mAuth.getCurrentUser();
                     Map<String, Object> friend = new HashMap<>();
                     friend.put("name", contactName);
                     friend.put("Phone", contactPhone);
-
+                    friend.put("UID",currentUser.getUid().toString());
+                    String finalContactPhone = contactPhone;
                     db.collection("friends")
                             .add(friend)
                             .addOnSuccessListener(documentReference -> {
                                 Toast.makeText(MainActivity.this, "Contact added successfully!", Toast.LENGTH_SHORT).show();
+                                db.collection("users")
+                                        .whereEqualTo("phone", finalContactPhone)
+                                        .get()
+                                        .addOnCompleteListener(task -> {
+                                            if (task.isSuccessful()) {
+                                                if (!task.getResult().isEmpty()) {
+                                                    // Phone number found in 'users' collection
+                                                    Log.d("Firestore", "Phone number found in users collection after upload.");
+                                                    Toast.makeText(MainActivity.this, "Phone number found in users collection.", Toast.LENGTH_SHORT).show();
+                                                    DocumentSnapshot userDoc = task.getResult().getDocuments().get(0);
+                                                    String fcmToken = userDoc.getString("fcmToken");
+                                                    if (fcmToken != null) {
+                                                        DocumentReference friendDocRef = db.collection("friends").document(documentReference.getId());
+                                                        friendDocRef.update("fcmToken", fcmToken)
+                                                                .addOnSuccessListener(aVoid -> {
+                                                                    Log.d("Firestore", "FCMTokens successfully updated in friends document.");
+                                                                    Toast.makeText(MainActivity.this, "FCMTokens successfully updated.", Toast.LENGTH_SHORT).show();
+                                                                })
+                                                                .addOnFailureListener(e -> {
+                                                                    Log.w("Firestore", "Error updating FCMTokens", e);
+                                                                    Toast.makeText(MainActivity.this, "Error updating FCMTokens.", Toast.LENGTH_SHORT).show();
+                                                                });
+                                                    }
+                                                } else {
+                                                    // Phone number not found
+                                                    Log.d("Firestore", "Phone number not found in users collection.");
+                                                    Toast.makeText(MainActivity.this, "Phone number not found in users collection.", Toast.LENGTH_SHORT).show();
+                                                }
+                                            } else {
+                                                Log.w("Firestore", "Error querying users collection", task.getException());
+                                                Toast.makeText(MainActivity.this, "Error querying users collection.", Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
                             })
                             .addOnFailureListener(e -> {
                                 Toast.makeText(MainActivity.this, "Error adding contact: " + e.getMessage(), Toast.LENGTH_SHORT).show();
