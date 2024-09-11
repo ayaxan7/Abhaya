@@ -86,35 +86,6 @@ public class MainActivity extends AppCompatActivity {
             } else if (destination.getId() == R.id.nav_slideshow) {
                 binding.appBarMain.fab.setOnClickListener(view -> {
                     checkContactsPermission();
-//                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, androidx.appcompat.R.style.AlertDialog_AppCompat);
-//                    final View customLayout = getLayoutInflater().inflate(R.layout.add_contacts_popup, null);
-//                    builder.setView(customLayout);
-//                    builder.setTitle("Add Contact");
-//
-//                    builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
-//                        @Override
-//                        public void onClick(DialogInterface dialog, int which) {
-//                            EditText frnd_name = customLayout.findViewById(R.id.frnd_name);
-//                            EditText frnd_phone = customLayout.findViewById(R.id.frnd_phone);
-//                            String name = frnd_name.getText().toString();
-//                            String phone = frnd_phone.getText().toString();
-//                            FirebaseFirestore db = FirebaseFirestore.getInstance();
-//                            Map<String, Object> friend = new HashMap<>();
-//                            friend.put("name", name);
-//                            friend.put("Phone", phone);
-//                            db.collection("friends")
-//                                    .add(friend)
-//                                    .addOnSuccessListener(documentReference -> {
-//                                        Toast.makeText(MainActivity.this, "Contact added successfully!", Toast.LENGTH_SHORT).show();
-//                                    })
-//                                    .addOnFailureListener(e -> {
-//                                        Toast.makeText(MainActivity.this, "Error adding contact: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-//                                    });
-//                        }
-//                    });
-//                    builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
-//                    AlertDialog dialog = builder.create();
-//                    dialog.show();
                 });
 
 
