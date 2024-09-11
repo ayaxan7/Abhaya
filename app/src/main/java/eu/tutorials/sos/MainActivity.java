@@ -1,20 +1,28 @@
 package eu.tutorials.sos;
 import android.Manifest;
+
 import android.content.Intent;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.messaging.FirebaseMessaging;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -28,6 +36,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import eu.tutorials.sos.databinding.ActivityMainBinding;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -37,8 +48,10 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
+    private static final int REQUEST_CONTACTS_PERMISSION = 1;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 2;
+    private static final int PICK_CONTACT_REQUEST = 2;
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
     private FirebaseAuth mAuth;
@@ -54,17 +67,61 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
         initializeFirebaseServices();
         setupToolbarAndNavigation();
         handleWidgetIntent(getIntent());
-
         checkLocationPermission();
         startLocationService();
         requestNotificationPermission();
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+        AppBarConfiguration mAppBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow)
+                .setOpenableLayout(binding.drawerLayout)
+                .build();
+        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
+        NavigationUI.setupWithNavController(binding.navView, navController);
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            if (destination.getId() == R.id.nav_home) {
+                binding.appBarMain.fab.setOnClickListener(view -> sendSos());
+            } else if (destination.getId() == R.id.nav_slideshow) {
+                binding.appBarMain.fab.setOnClickListener(view -> {
+                    checkContactsPermission();
+//                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, androidx.appcompat.R.style.AlertDialog_AppCompat);
+//                    final View customLayout = getLayoutInflater().inflate(R.layout.add_contacts_popup, null);
+//                    builder.setView(customLayout);
+//                    builder.setTitle("Add Contact");
+//
+//                    builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
+//                        @Override
+//                        public void onClick(DialogInterface dialog, int which) {
+//                            EditText frnd_name = customLayout.findViewById(R.id.frnd_name);
+//                            EditText frnd_phone = customLayout.findViewById(R.id.frnd_phone);
+//                            String name = frnd_name.getText().toString();
+//                            String phone = frnd_phone.getText().toString();
+//                            FirebaseFirestore db = FirebaseFirestore.getInstance();
+//                            Map<String, Object> friend = new HashMap<>();
+//                            friend.put("name", name);
+//                            friend.put("Phone", phone);
+//                            db.collection("friends")
+//                                    .add(friend)
+//                                    .addOnSuccessListener(documentReference -> {
+//                                        Toast.makeText(MainActivity.this, "Contact added successfully!", Toast.LENGTH_SHORT).show();
+//                                    })
+//                                    .addOnFailureListener(e -> {
+//                                        Toast.makeText(MainActivity.this, "Error adding contact: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+//                                    });
+//                        }
+//                    });
+//                    builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+//                    AlertDialog dialog = builder.create();
+//                    dialog.show();
+                });
 
-        binding.appBarMain.fab.setOnClickListener(view -> sendSos());
+
+            }
+        });
     }
+
 
     private void initializeFirebaseServices() {
         mAuth = FirebaseAuth.getInstance();
@@ -96,7 +153,19 @@ public class MainActivity extends AppCompatActivity {
                     .addOnFailureListener(e -> Log.e("MainActivity", "Failed to update FCM token in Firestore", e));
         }
     }
-
+    private void checkContactsPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_CONTACTS_PERMISSION);
+        } else {
+            openContactsPicker();
+        }
+    }
+    private void openContactsPicker() {
+        Intent contactPickerIntent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+        startActivityForResult(contactPickerIntent, PICK_CONTACT_REQUEST);
+    }
     private void setupToolbarAndNavigation() {
         setSupportActionBar(binding.appBarMain.toolbar);
         DrawerLayout drawer = binding.drawerLayout;
@@ -256,6 +325,60 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICK_CONTACT_REQUEST && resultCode == RESULT_OK) {
+            Uri contactUri = data.getData();
+            if (contactUri != null) {
+                retrieveContactInfo(contactUri);
+            }
+        }
+    }
+
+    private void retrieveContactInfo(Uri contactUri) {
+        String[] projection = {ContactsContract.Contacts._ID, ContactsContract.Contacts.DISPLAY_NAME, ContactsContract.Contacts.HAS_PHONE_NUMBER};
+
+        Cursor cursor = getContentResolver().query(contactUri, projection, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            String contactId = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
+            String contactName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
+            int hasPhoneNumber = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsContract.Contacts.HAS_PHONE_NUMBER));
+            if (hasPhoneNumber > 0) {
+                Cursor phoneCursor = getContentResolver().query(
+                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                        new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
+                        ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                        new String[]{contactId},
+                        null);
+                if (phoneCursor != null && phoneCursor.moveToFirst()) {
+                    String contactPhone = phoneCursor.getString(phoneCursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    phoneCursor.close();
+                    FirebaseFirestore db = FirebaseFirestore.getInstance();
+                    Map<String, Object> friend = new HashMap<>();
+                    friend.put("name", contactName);
+                    friend.put("Phone", contactPhone);
+
+                    db.collection("friends")
+                            .add(friend)
+                            .addOnSuccessListener(documentReference -> {
+                                Toast.makeText(MainActivity.this, "Contact added successfully!", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(MainActivity.this, "Error adding contact: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                    // Use contactName and contactPhone as needed
+                    Toast.makeText(this, "Selected Contact: " + contactName + " - " + contactPhone, Toast.LENGTH_LONG).show();
+                }
+
+            }
+
+            cursor.close();
+        }
+    }
+
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
@@ -266,11 +389,18 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Location permission denied. Some features may not work.", Toast.LENGTH_LONG).show();
             }
-        } else if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
+        } if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.i("MainActivity", "Notification permission granted");
             } else {
                 Toast.makeText(this, "Notification permission denied.", Toast.LENGTH_LONG).show();
+            }
+        }
+        if (requestCode == REQUEST_CONTACTS_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openContactsPicker();
+            } else {
+                Toast.makeText(this, "Permission denied to read contacts", Toast.LENGTH_SHORT).show();
             }
         }
     }
