@@ -19,6 +19,7 @@ playServicesLocation = "21.3.0"
 firebaseFirestore = "25.1.0"
 volley = "1.2.1"
 annotation = "1.8.2"
+kotlin = "1.9.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -43,4 +44,5 @@ annotation = { group = "androidx.annotation", name = "annotation", version.ref =
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
