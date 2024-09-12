@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 
 import androidx.annotation.NonNull;
@@ -15,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -47,7 +49,6 @@ public class SlideshowFragment extends Fragment {
         pd=new ProgressDialog(getContext());
         pd.setCancelable(false);
         pd.setMessage("Fetching Data...");
-        pd.show();
         recyclerView=root.findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -61,8 +62,9 @@ public class SlideshowFragment extends Fragment {
     }
     private void EventChangeListener() {
         Log.d("Firestore Data", "Fetching data...");
-
+        String currentUserUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         db.collection("friends")
+                .whereEqualTo("UID", currentUserUid)
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
                     public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
@@ -75,10 +77,11 @@ public class SlideshowFragment extends Fragment {
                             return;
                         }
 
-                        if (value == null) {
+                        if (value == null|| value.isEmpty()) {
                             Log.i("Firestore Data", "No data available");
                             return;
                         }
+                        contactsList.clear();
                         for (DocumentChange dc : value.getDocumentChanges()) {
                             if (dc.getType() == DocumentChange.Type.ADDED) {
                                 String id = dc.getDocument().getId();
@@ -87,8 +90,19 @@ public class SlideshowFragment extends Fragment {
                                 Log.i("Firestore Data", "Document Data: " + friendMap.toString());
                                 String phone = (String) friendMap.get("Phone");
                                 String name = (String) friendMap.get("name");
-                                contactsList.add(new friends(phone, name));
-                                Log.d("Firestore Data", "Name: " + name + ", Phone: " + phone);
+                                boolean exists = false;
+                                for (friends contact : contactsList) {
+                                    if (contact.getPhone().equals(phone)) {
+                                        exists = true;
+                                        Log.i("Firestore Data", "Contact with phone " + phone + " already exists.");
+                                        Toast.makeText(getContext(),"Contact already registered",Toast.LENGTH_SHORT).show();
+                                        break;
+                                    }
+                                }
+                                if (!exists) {
+                                    contactsList.add(new friends(phone, name));
+                                    Log.d("Firestore Data", "Name: " + name + ", Phone: " + phone);
+                                }
                             }
                         }
                         MyAdapter.notifyDataSetChanged();

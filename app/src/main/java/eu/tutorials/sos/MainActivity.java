@@ -41,7 +41,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
 import eu.tutorials.sos.databinding.ActivityMainBinding;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -361,17 +360,16 @@ public class MainActivity extends AppCompatActivity {
                                                         friendDocRef.update("fcmToken", fcmToken)
                                                                 .addOnSuccessListener(aVoid -> {
                                                                     Log.d("Firestore", "FCMTokens successfully updated in friends document.");
-                                                                    Toast.makeText(MainActivity.this, "FCMTokens successfully updated.", Toast.LENGTH_SHORT).show();
+
                                                                 })
                                                                 .addOnFailureListener(e -> {
                                                                     Log.w("Firestore", "Error updating FCMTokens", e);
-                                                                    Toast.makeText(MainActivity.this, "Error updating FCMTokens.", Toast.LENGTH_SHORT).show();
+
                                                                 });
                                                     }
                                                 } else {
-                                                    // Phone number not found
                                                     Log.d("Firestore", "Phone number not found in users collection.");
-                                                    Toast.makeText(MainActivity.this, "Phone number not found in users collection.", Toast.LENGTH_SHORT).show();
+
                                                 }
                                             } else {
                                                 Log.w("Firestore", "Error querying users collection", task.getException());
@@ -383,9 +381,7 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.makeText(MainActivity.this, "Error adding contact: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                             });
                 }
-
             }
-
             cursor.close();
         }
     }
