@@ -12,12 +12,12 @@
     android:layout_margin="15dp"
     android:background="@drawable/background"
     tools:context=".Register">
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/register"
         android:textStyle="bold"
-
         android:textColor="@color/white"
         android:textSize="30sp"
         android:layout_marginBottom="20dp"
@@ -33,11 +33,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/custum_input"
-
             android:gravity="center"
             android:hint="Name"
             android:padding="16dp" />
     </com.google.android.material.textfield.TextInputLayout>
+
     <!-- Phone Number Input -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
@@ -54,22 +54,29 @@
             android:padding="16dp" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
+    <!-- Gender Radio Group -->
+    <RadioGroup
+        android:id="@+id/genderRadioGroup"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center">
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
 
-         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/gender"
-            android:layout_width="match_parent"
+        <RadioButton
+            android:id="@+id/radioMale"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:background="@drawable/custum_input"
-            android:gravity="center"
-            android:hint="Gender"
-            android:inputType="text"
-            android:padding="16dp" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:text="Male" />
 
+        <RadioButton
+            android:id="@+id/radioFemale"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/custum_input"
+            android:text="Female"
+            android:layout_marginStart="16dp" />
+    </RadioGroup>
 
     <!-- Email Input -->
     <com.google.android.material.textfield.TextInputLayout
@@ -85,7 +92,6 @@
             android:hint="@string/email"
             android:padding="16dp" />
     </com.google.android.material.textfield.TextInputLayout>
-
 
     <!-- Password Input -->
     <com.google.android.material.textfield.TextInputLayout
@@ -103,12 +109,14 @@
             android:padding="16dp" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Progress Bar -->
     <ProgressBar
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/bar"
         android:visibility="gone" />
 
+    <!-- Register Button -->
     <Button
         android:id="@+id/btn_register"
         android:layout_width="wrap_content"
@@ -117,6 +125,7 @@
         android:padding="10dp"
         android:text="@string/register" />
 
+    <!-- Already Registered? -->
     <TextView
         android:id="@+id/login"
         android:layout_width="wrap_content"

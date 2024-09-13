@@ -7,10 +7,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
 import android.widget.Spinner;  // Import Spinner
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -28,7 +30,7 @@ public class Register extends AppCompatActivity {
     FirebaseFirestore db;
     ProgressBar bar;
     TextView login;
-
+    String gender1;
     @Override
     public void onStart() {
         super.onStart();
@@ -47,17 +49,17 @@ public class Register extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
-
         name = findViewById(R.id.name);
         email = findViewById(R.id.email);
         password = findViewById(R.id.password);
         phone = findViewById(R.id.phone);
-        gender = findViewById(R.id.gender); // Add this line
         btn_register = findViewById(R.id.btn_register);
         bar = findViewById(R.id.bar);
+        gender1="";
         login = findViewById(R.id.login);
+        RadioButton radioMale = findViewById(R.id.radioMale);
+        RadioButton radioFemale = findViewById(R.id.radioFemale);
 
-        // Initialize Firebase Auth and Firestore
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
@@ -66,15 +68,25 @@ public class Register extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
-
         btn_register.setOnClickListener(v -> {
             bar.setVisibility(View.VISIBLE);
             String name1 = name.getText().toString().trim();
             String email1 = email.getText().toString().trim();
             String password1 = password.getText().toString().trim();
             String phone1 = phone.getText().toString().trim();
-            String gender1 = gender.getText().toString().trim(); // Add this line
+            if (!radioMale.isChecked() && !radioFemale.isChecked()) {
+                Toast.makeText(Register.this, "Please select your gender", Toast.LENGTH_SHORT).show();
+                bar.setVisibility(View.GONE);
+                btn_register.setVisibility(View.VISIBLE);
+                return;
+            }
+            if (radioMale.isChecked()) {
+                gender1 = "Male";
+            } else if (radioFemale.isChecked()) {
+                gender1 = "Female";
+            }
 
+            // Validate other fields
             if (name1.isEmpty() || email1.isEmpty() || password1.isEmpty() || phone1.isEmpty() || gender1.isEmpty()) {
                 Toast.makeText(Register.this, "Enter all fields", Toast.LENGTH_SHORT).show();
                 bar.setVisibility(View.GONE);
@@ -88,6 +100,8 @@ public class Register extends AppCompatActivity {
                 btn_register.setVisibility(View.VISIBLE);
                 return;
             }
+
+            // Proceed with Firebase registration
             mAuth.createUserWithEmailAndPassword(email1, password1)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
@@ -104,17 +118,14 @@ public class Register extends AppCompatActivity {
                                         .addOnSuccessListener(aVoid -> {
                                             Log.d("Firestore", "User data successfully written!");
                                             Toast.makeText(Register.this, "Registration successful!", Toast.LENGTH_SHORT).show();
-                                            // Save token locally
                                             SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
                                             SharedPreferences.Editor editor = sharedPreferences.edit();
                                             editor.putString("name", name1);
                                             editor.putString("phone", phone1);
                                             editor.apply();
-
                                             Intent intent = new Intent(Register.this, MainActivity.class);
                                             startActivity(intent);
                                             finish();
-                                            return;
                                         })
                                         .addOnFailureListener(e -> {
                                             Log.w("Firestore", "Error writing user data", e);
@@ -130,6 +141,7 @@ public class Register extends AppCompatActivity {
                         }
                     });
         });
+
     }
 }
 

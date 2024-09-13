@@ -33,10 +33,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        // Get the current friend item
         friends friend = contactsList.get(position);
-
-        // Set the name and phone using getter methods
         holder.Name.setText(friend.getName());
         holder.Phone.setText(friend.getPhone());
     }
@@ -45,8 +42,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     public int getItemCount() {
         return contactsList.size();
     }
-
-    // ViewHolder class to bind the view items
     public static class MyViewHolder extends RecyclerView.ViewHolder {
         TextView Name, Phone;
 

@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
         requestNotificationPermission();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         AppBarConfiguration mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow)
+                R.id.nav_home, R.id.nav_slideshow)
                 .setOpenableLayout(binding.drawerLayout)
                 .build();
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
@@ -87,15 +87,13 @@ public class MainActivity extends AppCompatActivity {
                 binding.appBarMain.fab.setOnClickListener(view -> sendSos());
             } else if (destination.getId() == R.id.nav_slideshow) {
                 binding.appBarMain.fab.setOnClickListener(view -> {
-                    checkContactsPermission();
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                        checkContactsPermission();
+                    }
                 });
-
-
             }
         });
     }
-
-
     private void initializeFirebaseServices() {
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
@@ -131,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_CONTACTS_PERMISSION);
+            Toast.makeText(this,"Contacts Permission Denied",Toast.LENGTH_SHORT).show();
         } else {
             openContactsPicker();
         }
@@ -144,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow)
+                R.id.nav_home, R.id.nav_slideshow)
                 .setOpenableLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
@@ -201,23 +200,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendSos() {
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Location permission is required to send SOS.", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-                if (location != null) {
-                    sendSosRequest(location.getLatitude(), location.getLongitude());
-                } else {
-                    Toast.makeText(this, "Unable to obtain location.", Toast.LENGTH_LONG).show();
-                }
-            });
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Location permission is required to send SOS.", Toast.LENGTH_LONG).show();
+            return;
         }
-    }
 
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        new Thread(() -> {
+                            sendSosRequest(location.getLatitude(), location.getLongitude());
+                        }).start();
+                    } else {
+                        runOnUiThread(() -> Toast.makeText(this, "Unable to obtain location.", Toast.LENGTH_LONG).show());
+                    }
+                });
+    }
     private void sendSosRequest(double latitude, double longitude) {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
@@ -233,6 +231,7 @@ public class MainActivity extends AppCompatActivity {
                                 .add("longitude", String.valueOf(longitude))
                                 .add("timestamp", new Date().toString())
                                 .build();
+
                         Request request = new Request.Builder()
                                 .url("https://sih-backend-8bsr.onrender.com/api/data")
                                 .post(formBody)
@@ -246,18 +245,23 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                                if (response.isSuccessful()) {
-                                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "SOS sent successfully!", Toast.LENGTH_LONG).show());
-                                } else {
-                                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Try again.", Toast.LENGTH_LONG).show());
+                                try {
+                                    if (response.isSuccessful()) {
+                                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "SOS sent successfully!", Toast.LENGTH_LONG).show());
+                                    } else {
+                                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Try again.", Toast.LENGTH_LONG).show());
+                                    }
+                                } finally {
+                                    if (response.body() != null) {
+                                        response.body().close();  // Close the response body to prevent leaks
+                                    }
                                 }
                             }
                         });
                     })
-                    .addOnFailureListener(e -> Toast.makeText(this, "User data not found.", Toast.LENGTH_SHORT).show());
+                    .addOnFailureListener(e -> runOnUiThread(() -> Toast.makeText(this, "User data not found.", Toast.LENGTH_SHORT).show()));
         }
     }
-
     private void requestNotificationPermission() {
         if (!NotificationManagerCompat.from(this).areNotificationsEnabled()) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST_CODE);
@@ -406,6 +410,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (requestCode == REQUEST_CONTACTS_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.i("MainActivity", "Contacts permission granted");
                 openContactsPicker();
             } else {
                 Toast.makeText(this, "Permission denied to read contacts", Toast.LENGTH_SHORT).show();

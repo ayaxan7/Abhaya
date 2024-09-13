@@ -22,20 +22,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
-
-        // Log the received message
         Log.d(TAG, "From: " + remoteMessage.getFrom());
-
-        // Check if the message contains a notification payload
         if (remoteMessage.getNotification() != null) {
             Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
             sendNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody());
         }
-
-        // Check if the message contains a data payload
         if (remoteMessage.getData().size() > 0) {
             Log.d(TAG, "Message data payload: " + remoteMessage.getData());
-            // You can handle data payload here if needed
         }
     }
 
@@ -52,9 +45,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         String channelId = "default_channel";
         Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-
-        // Vibration pattern: long array defines the vibration and sleep durations in milliseconds.
-        long[] vibrationPattern = {0, 500, 1000}; // Start immediately, vibrate for 500ms, pause for 1000ms
+        long[] vibrationPattern = {0, 500, 1000};
 
         NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(this, channelId)
