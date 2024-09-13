@@ -13,7 +13,12 @@
           "package_name": "eu.tutorials.sos"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "445936672141-8d935mpgtlsou2cofjfs7cm2jnupg4gv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD_B3s4qZcQQ02nwQxvO-1_OXkB_EDIhDk"
@@ -21,7 +26,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "445936672141-8d935mpgtlsou2cofjfs7cm2jnupg4gv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

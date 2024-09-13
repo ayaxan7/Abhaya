@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.gms.google.services)
-    alias(libs.plugins.kotlin.android)
 }
 
 android {
@@ -57,5 +56,4 @@ dependencies {
     implementation (libs.okhttp)
     implementation(libs.okhttp)
     implementation (libs.volley)
-    implementation ("com.airbnb.android:lottie:6.1.0")
 }

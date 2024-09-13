@@ -94,31 +94,27 @@ public class Register extends AppCompatActivity {
                             FirebaseUser user = mAuth.getCurrentUser();
                             if (user != null) {
                                 String userId = user.getUid();
-
-                                // Create a map of user data to store in Firestore
                                 Map<String, Object> userData = new HashMap<>();
                                 userData.put("name", name1);
                                 userData.put("phone", phone1);
                                 userData.put("email", email1);
-                                userData.put("gender", gender1); // Add this line
-                                // Save user data in Firestore under a document with the user's UID
+                                userData.put("gender", gender1);
                                 db.collection("users").document(userId)
                                         .set(userData)
                                         .addOnSuccessListener(aVoid -> {
                                             Log.d("Firestore", "User data successfully written!");
                                             Toast.makeText(Register.this, "Registration successful!", Toast.LENGTH_SHORT).show();
-
                                             // Save token locally
                                             SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
                                             SharedPreferences.Editor editor = sharedPreferences.edit();
                                             editor.putString("name", name1);
                                             editor.putString("phone", phone1);
-                                            editor.putString("gender", gender1); // Add this line
                                             editor.apply();
 
                                             Intent intent = new Intent(Register.this, MainActivity.class);
                                             startActivity(intent);
                                             finish();
+                                            return;
                                         })
                                         .addOnFailureListener(e -> {
                                             Log.w("Firestore", "Error writing user data", e);

@@ -84,7 +84,6 @@ public class HomeFragment extends Fragment {
                 ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
                 return;
             }
-
             fusedLocationClient.getLastLocation()
                     .addOnSuccessListener(getActivity(), location -> {
                         if (location != null) {
