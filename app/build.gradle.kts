@@ -2,17 +2,21 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.gms.google.services)
 }
+
 android {
     namespace = "eu.tutorials.sos"
     compileSdk = 34
+
     defaultConfig {
         applicationId = "eu.tutorials.sos"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -21,11 +25,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-
-            create("customDebugType") {
-                isDebuggable = false
-            }
-
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -37,6 +36,7 @@ android {
 }
 
 dependencies {
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)
@@ -56,7 +56,4 @@ dependencies {
     implementation (libs.okhttp)
     implementation(libs.okhttp)
     implementation (libs.volley)
-    implementation (libs.play.services.auth)
-    implementation (libs.firebase.messaging)
-
 }
