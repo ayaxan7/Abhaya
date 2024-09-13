@@ -1,8 +1,6 @@
 package eu.tutorials.sos;
 import android.Manifest;
-
 import android.content.Intent;
-
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.GeoPoint;
@@ -66,7 +64,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        Intent intent = getIntent();
+        if (intent != null && "eu.tutorials.sos.SEND_SOS".equals(intent.getAction())) {
+            sendSos();
+        }
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         initializeFirebaseServices();
@@ -388,8 +389,6 @@ public class MainActivity extends AppCompatActivity {
             cursor.close();
         }
     }
-
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
