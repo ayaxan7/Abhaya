@@ -284,7 +284,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
     private void logout() {
         mAuth.signOut();
         startActivity(new Intent(this, Login.class));

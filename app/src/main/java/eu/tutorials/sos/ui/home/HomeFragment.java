@@ -3,7 +3,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
+
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,13 +22,8 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GetTokenResult;
 import com.google.firebase.firestore.FirebaseFirestore;
-
 import org.json.JSONObject;
-
-import java.util.Date;
-
 import eu.tutorials.sos.databinding.FragmentHomeBinding;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;

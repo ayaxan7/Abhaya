@@ -50,10 +50,11 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.firebase.firestore)
     implementation(libs.annotation)
+    implementation(libs.firebase.messaging)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation (libs.lottie)
     implementation (libs.okhttp)
-    implementation(libs.okhttp)
     implementation (libs.volley)
 }
