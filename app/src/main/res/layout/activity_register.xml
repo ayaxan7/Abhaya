@@ -1,138 +1,154 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
-    android:padding="15dp"
-    android:layout_margin="15dp"
-    android:background="@drawable/background"
+    android:padding="16dp"
     tools:context=".Register">
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/register"
-        android:textStyle="bold"
-        android:textColor="@color/white"
-        android:textSize="30sp"
-        android:layout_marginBottom="20dp"
-        android:gravity="center" />
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:text="Create Your Account"
+        android:textSize="35sp" />
 
-    <!-- Name Input -->
-    <com.google.android.material.textfield.TextInputLayout
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Name"
+        android:textSize="20sp" />
+
+    <EditText
+        android:id="@+id/name"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/background_custom"
+        android:ems="10"
+        android:hint="Enter Your Name"
+        android:inputType="text" />
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/custum_input"
-            android:gravity="center"
-            android:hint="Name"
-            android:padding="16dp" />
-    </com.google.android.material.textfield.TextInputLayout>
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Gender"
+        android:textSize="20sp" />
 
-    <!-- Phone Number Input -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/phone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/custum_input"
-            android:gravity="center"
-            android:hint="Phone Number"
-            android:inputType="phone"
-            android:padding="16dp" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <!-- Gender Radio Group -->
     <RadioGroup
         android:id="@+id/genderRadioGroup"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginTop="8dp">
 
         <RadioButton
             android:id="@+id/radioMale"
-            android:layout_width="150dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/custum_input"
+            android:layout_weight="1"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/background_custom"
             android:text="Male" />
 
         <RadioButton
             android:id="@+id/radioFemale"
-            android:layout_width="150dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/custum_input"
-            android:text="Female"
-            android:layout_marginStart="16dp" />
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:background="@drawable/background_custom"
+            android:text="Female" />
+
     </RadioGroup>
 
-    <!-- Email Input -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/email"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/custum_input"
-            android:gravity="center"
-            android:hint="@string/email"
-            android:padding="16dp" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <!-- Password Input -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/password"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/custum_input"
-            android:gravity="center"
-            android:hint="@string/password"
-            android:inputType="textPassword"
-            android:padding="16dp" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <!-- Progress Bar -->
-    <ProgressBar
+    <TextView
+        android:id="@+id/textView5"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Phone Number"
+        android:textSize="20sp" />
+
+    <EditText
+        android:id="@+id/phone"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/background_custom"
+        android:ems="10"
+        android:hint="Enter Your Phone Number"
+        android:inputType="text" />
+
+    <TextView
+        android:id="@+id/textView6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Email id"
+        android:textSize="20sp" />
+
+    <EditText
+        android:id="@+id/email"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/background_custom"
+        android:ems="10"
+        android:hint="Enter your email id"
+        android:inputType="text" />
+
+    <TextView
+        android:id="@+id/textView7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Password"
+        android:textSize="20sp" />
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/background_custom"
+        android:ems="10"
+        android:hint="Enter your Password"
+        android:inputType="textPassword" />
+
+    <ProgressBar
         android:id="@+id/bar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:visibility="gone" />
 
-    <!-- Register Button -->
     <Button
         android:id="@+id/btn_register"
-        android:layout_width="wrap_content"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:padding="10dp"
-        android:text="@string/register" />
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="#F70000"
+        android:text="Sign Up" />
 
-    <!-- Already Registered? -->
     <TextView
         android:id="@+id/login"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center"
-        android:text="@string/registered_already_login_here" />
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:text="Already have an account? Log in"
+        android:clickable="true" />
+
+
 </LinearLayout>

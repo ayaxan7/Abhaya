@@ -7,6 +7,8 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.messaging.FirebaseMessaging;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -92,9 +94,11 @@ public class MainActivity extends AppCompatActivity {
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             if (destination.getId() == R.id.nav_home) {
                 binding.appBarMain.fab.setImageResource(R.drawable.incognito_1__1_);
+                binding.appBarMain.fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FF0000")));
                 binding.appBarMain.fab.setOnClickListener(view -> sendSos());
             } else if (destination.getId() == R.id.nav_slideshow) {
                 binding.appBarMain.fab.setImageResource(R.drawable.add_friend_svgrepo_com);
+                binding.appBarMain.fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFFFFF")));
                 binding.appBarMain.fab.setOnClickListener(view -> {
                     Snackbar.make(findViewById(android.R.id.content), "Coming Soon...", Snackbar.LENGTH_SHORT).show();
                 });

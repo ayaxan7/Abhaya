@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.Spinner;  // Import Spinner
@@ -24,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Register extends AppCompatActivity {
-    TextInputEditText name, email, password, phone, gender;
+    EditText name, email, password, phone, gender;
     Button btn_register;
     FirebaseAuth mAuth;
     FirebaseFirestore db;
@@ -101,7 +102,7 @@ public class Register extends AppCompatActivity {
                 return;
             }
 
-            // Proceed with Firebase registration
+
             mAuth.createUserWithEmailAndPassword(email1, password1)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {

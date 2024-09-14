@@ -7,44 +7,59 @@
     android:layout_height="match_parent"
     tools:context=".register_btn">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/logoImageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/app_icon"
-        app:layout_constraintBottom_toTopOf="@+id/loginEmailButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.3" />
+    <!-- Login with Google Button -->
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/loginEmailButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Login with Email"
-        app:layout_constraintBottom_toTopOf="@+id/loginGoogleButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/logoImageView"
-        app:layout_constraintHorizontal_bias="0.5"
-        android:layout_marginTop="8dp"
-    android:layout_marginEnd="16dp"
-    android:layout_marginStart="16dp" />
-
-    <!-- Login with Google Button -->
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/loginGoogleButton"
-        android:layout_width="0dp"
+        android:layout_width="379dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="368dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="Login with Digilocker"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:background="@drawable/bck_custum"
+        android:text="Login with Email"
+        android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/loginGoogleButton"
+        android:layout_width="379dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="36dp"
+        android:layout_marginEnd="16dp"
+
+        android:background="@drawable/bck_custum"
+        android:text="Login with Digilocker"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/loginEmailButton" />
+
+    <TextView
+        android:id="@+id/textView8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="133dp"
+        android:layout_marginEnd="133dp"
+        android:layout_marginBottom="24dp"
+        android:text="© 2024 Team Rocket"
+        android:textSize="15sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="323dp"
+        android:layout_height="335dp"
+        android:layout_marginStart="44dp"
+        android:layout_marginTop="33dp"
+        android:layout_marginEnd="44dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/final_logo" />
 </androidx.constraintlayout.widget.ConstraintLayout>
