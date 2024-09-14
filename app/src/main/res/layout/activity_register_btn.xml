@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     tools:context=".register_btn">
 
-    <!-- App Logo ImageView -->
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/logoImageView"
         android:layout_width="wrap_content"
@@ -19,7 +18,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.3" />
 
-    <!-- Login with Email Button -->
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/loginEmailButton"
         android:layout_width="0dp"
