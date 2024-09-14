@@ -1,6 +1,8 @@
 package eu.tutorials.sos;
+
 import android.Manifest;
 import android.content.Intent;
+
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.messaging.FirebaseMessaging;
 import android.content.pm.PackageManager;
@@ -20,22 +22,30 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.Date;
+
 import eu.tutorials.sos.databinding.ActivityMainBinding;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+
 public class MainActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 2;
@@ -117,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
             View headerView = navigationView.getHeaderView(0);
             navUserName = headerView.findViewById(R.id.textView);
             navUserPhone = headerView.findViewById(R.id.textView2);
+
             firestore.collection("users").document(user.getUid()).get()
                     .addOnSuccessListener(documentSnapshot -> {
                         if (documentSnapshot.exists()) {
@@ -183,38 +194,73 @@ public class MainActivity extends AppCompatActivity {
                     .addOnSuccessListener(documentSnapshot -> {
                         String name = documentSnapshot.getString("name");
                         String phone = documentSnapshot.getString("phone");
+                        user.getIdToken(true).addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                String idToken = task.getResult().getToken();
 
-                        RequestBody formBody = new FormBody.Builder()
-                                .add("name", name)
-                                .add("phone", phone)
-                                .add("latitude", String.valueOf(latitude))
-                                .add("longitude", String.valueOf(longitude))
-                                .add("timestamp", new Date().toString())
-                                .build();
-                        Request request = new Request.Builder()
-                                .url("https://sih-backend-8bsr.onrender.com/api/data")
-                                .post(formBody)
-                                .build();
-
-                        httpClient.newCall(request).enqueue(new Callback() {
-                            @Override
-                            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Try again.", Toast.LENGTH_LONG).show());
-                            }
-
-                            @Override
-                            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                                if (response.isSuccessful()) {
-                                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "SOS sent successfully!", Toast.LENGTH_LONG).show());
-                                } else {
-                                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Try again.", Toast.LENGTH_LONG).show());
+                                JSONObject json = new JSONObject();
+                                try {
+                                    json.put("longitude", longitude);
+                                    json.put("latitude", latitude);
+                                    json.put("name", "Anonymous");
+                                    json.put("phoneNo", "XXXXXXXXXX");
+                                    json.put("time", System.currentTimeMillis());
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
                                 }
+                                RequestBody requestBody = RequestBody.create(
+                                        json.toString(),
+                                        MediaType.parse("application/json; charset=utf-8")
+                                );
+                                Log.d("SOS Request", "Sending SOS with fields: " +
+                                        "longitude=" + longitude + ", " +
+                                        "latitude=" + latitude + ", " +
+                                        "name=" + "Anonymous" + ", " +
+                                        "phoneNo=" + "XXXXXXXXXX" + ", " +
+                                        "time=" +  System.currentTimeMillis());
+
+                                Request request = new Request.Builder()
+                                        .url("https://sih-backend-8bsr.onrender.com/api/data")
+                                        .addHeader("Authorization", "Bearer " + idToken)
+                                        .post(requestBody)
+                                        .build();
+
+                                httpClient.newCall(request).enqueue(new Callback() {
+                                    @Override
+                                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                        Log.e("SOS Request", "Failed to send SOS request", e);
+                                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Try again.", Toast.LENGTH_LONG).show());
+                                    }
+
+                                    @Override
+                                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                                        if (response.isSuccessful()) {
+                                            Log.d("SOS Request", "SOS sent successfully. Response code: " + response.code());
+                                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "SOS sent successfully!", Toast.LENGTH_LONG).show());
+                                        } else {
+                                            Log.e("SOS Request", "Failed to send SOS. Response code: " + response.code() + ". Response body: " + response.body().string());
+                                            runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to send SOS. Try again.", Toast.LENGTH_LONG).show());
+                                        }
+                                    }
+                                });
+                            } else {
+                                Log.e("SOS Request", "Failed to get ID token.");
+                                Toast.makeText(MainActivity.this, "Failed to get ID token.", Toast.LENGTH_SHORT).show();
                             }
+                        }).addOnFailureListener(e -> {
+                            Log.e("SOS Request", "Failed to get ID token.", e);
+                            Toast.makeText(MainActivity.this, "Failed to get ID token.", Toast.LENGTH_SHORT).show();
                         });
                     })
-                    .addOnFailureListener(e -> Toast.makeText(this, "User data not found.", Toast.LENGTH_SHORT).show());
+                    .addOnFailureListener(e -> {
+                        Log.e("SOS Request", "User data not found.", e);
+                        Toast.makeText(this, "User data not found.", Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            Log.e("SOS Request", "No authenticated user found.");
         }
     }
+
 
     private void requestNotificationPermission() {
         if (!NotificationManagerCompat.from(this).areNotificationsEnabled()) {
