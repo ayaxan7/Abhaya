@@ -3,6 +3,7 @@ package eu.tutorials.sos;
 import android.Manifest;
 import android.content.Intent;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.messaging.FirebaseMessaging;
 import android.content.pm.PackageManager;
@@ -73,8 +74,25 @@ public class MainActivity extends AppCompatActivity {
         startLocationService();
         requestNotificationPermission();
 
-        binding.appBarMain.fab.setOnClickListener(view -> sendSos());
-    }
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+        AppBarConfiguration mAppBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.nav_home, R.id.nav_slideshow)
+                .setOpenableLayout(binding.drawerLayout)
+                .build();
+        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
+        NavigationUI.setupWithNavController(binding.navView, navController);
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            if (destination.getId() == R.id.nav_home) {
+                binding.appBarMain.fab.setImageResource(R.drawable.incognito_1__1_);
+                binding.appBarMain.fab.setOnClickListener(view -> sendSos());
+            } else if (destination.getId() == R.id.nav_slideshow) {
+                binding.appBarMain.fab.setImageResource(R.drawable.add_friend_svgrepo_com);
+                binding.appBarMain.fab.setOnClickListener(view -> {
+                    Snackbar.make(findViewById(android.R.id.content), "Coming Soon...", Snackbar.LENGTH_SHORT).show();
+                });
+                }
+            });
+        }
 
     private void initializeFirebaseServices() {
         mAuth = FirebaseAuth.getInstance();
@@ -83,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
         httpClient = new OkHttpClient();
         fetchFcmToken();
         updateNavigationHeader();
+
     }
 
     private void fetchFcmToken() {
