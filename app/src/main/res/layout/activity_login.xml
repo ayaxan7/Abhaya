@@ -5,61 +5,79 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Login"
-    android:orientation="vertical"
+    android:layout_margin="15dp"
+    android:background="@drawable/background"
     android:gravity="center"
+    android:orientation="vertical"
     android:padding="15dp"
-    android:layout_margin="15dp">
+    tools:context=".Login">
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/login"
-        android:textStyle="bold"
-        android:textSize="25sp"
         android:layout_marginBottom="20dp"
-        android:gravity="center"/>
+        android:gravity="center"
+        android:text="@string/login"
+        android:textColor="@color/white"
+        android:textSize="25sp"
+        android:textStyle="bold" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/email"
-            android:hint="@string/email"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:background="@drawable/custum_input"
+            android:backgroundTint="@color/white"
+            android:gravity="center"
+            android:hint="@string/email" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/password"
-            android:hint="@string/password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textPassword"/>
+            android:layout_margin="10dp"
+            android:background="@drawable/custum_input"
+            android:gravity="center"
+            android:hint="@string/password"
+            android:inputType="textPassword" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
     <ProgressBar
+        android:id="@+id/bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/bar"
         android:visibility="gone">
 
     </ProgressBar>
+
     <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:id="@+id/btn_login"
-        android:text="@string/login"
-        android:layout_marginTop="20dp"/>
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="@string/login" />
+
     <TextView
+        android:id="@+id/register"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/register"
-        android:text="@string/don_t_have_an_account_register_here"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="150dp"
+        android:clickable="true"
         android:gravity="center"
-        android:clickable="true"/>
+        android:text="@string/don_t_have_an_account_register_here"
+        android:textSize="20sp"
+        android:textStyle="italic" />
 
 </LinearLayout>

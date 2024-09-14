@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SOS</string>
+    <string name="app_name">Abhaya</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="nav_header_title">Android Studio</string>
@@ -32,6 +32,7 @@
         <item>Female</item>
     </string-array>
     <string name="default_web_client_id">445936672141-8d935mpgtlsou2cofjfs7cm2jnupg4gv.apps.googleusercontent.com</string>
+    <string name="widget_name">Quick alerts</string>
 </resources>
 
 

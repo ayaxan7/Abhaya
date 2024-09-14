@@ -3,7 +3,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
+
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,12 +22,10 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GetTokenResult;
 import com.google.firebase.firestore.FirebaseFirestore;
-
 import org.json.JSONObject;
 
-import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import eu.tutorials.sos.databinding.FragmentHomeBinding;
 import okhttp3.MediaType;
@@ -77,6 +75,7 @@ public class HomeFragment extends Fragment {
         view.animate().scaleX(1.2f).scaleY(1.2f).setDuration(300)
                 .withEndAction(() -> view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start()).start();
     }
+
     private void sendSos() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
@@ -134,23 +133,21 @@ public class HomeFragment extends Fragment {
     }
 
 
-
     private class SendSosTask extends AsyncTask<Void, Void, Boolean> {
         private final String idToken;
         private final String name;
         private final String phone;
         private final double latitude;
         private final double longitude;
-        private final long timestamp; // Use long for timestamp
+        private final long timestamp;
 
         public SendSosTask(String idToken, String name, String phone, double latitude, double longitude, long timestamp) {
             this.idToken = idToken;
-            Log.d("SOS", "ID Token: " + idToken);
             this.name = name;
             this.phone = phone;
             this.latitude = latitude;
             this.longitude = longitude;
-            this.timestamp = timestamp; // Use long
+            this.timestamp = timestamp;
         }
 
         @Override
@@ -161,7 +158,7 @@ public class HomeFragment extends Fragment {
                 json.put("longitude", longitude);
                 json.put("name", name);
                 json.put("phoneNo", phone);
-                json.put("time", timestamp); // Use long timestamp
+                json.put("time", timestamp);
 
                 MediaType JSON = MediaType.get("application/json; charset=utf-8");
                 RequestBody body = RequestBody.create(json.toString(), JSON);
@@ -170,6 +167,12 @@ public class HomeFragment extends Fragment {
                         .url("https://sih-backend-8bsr.onrender.com/api/data")
                         .addHeader("Authorization", "Bearer " + idToken)
                         .post(body)
+                        .build();
+
+                OkHttpClient client = new OkHttpClient.Builder()
+                        .connectTimeout(30, TimeUnit.SECONDS)
+                        .writeTimeout(30, TimeUnit.SECONDS)
+                        .readTimeout(30, TimeUnit.SECONDS)
                         .build();
 
                 try (Response response = client.newCall(request).execute()) {
@@ -196,22 +199,5 @@ public class HomeFragment extends Fragment {
             }
         }
     }
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == 1) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                sendSos();
-            } else {
-                Toast.makeText(getContext(), "Location permission denied. Cannot send SOS.", Toast.LENGTH_LONG).show();
-            }
-        }
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
-    }
 }
+

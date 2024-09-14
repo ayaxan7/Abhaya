@@ -36,10 +36,7 @@ public class register_btn extends AppCompatActivity {
             startActivity(intent);
             finish();
         }
-
-        // Initialize buttons
         loginEmailButton = findViewById(R.id.loginEmailButton);
-        // Set onClick listeners
         loginEmailButton.setOnClickListener(v -> {
             Intent intent = new Intent(register_btn.this, Login.class);
             startActivity(intent);
