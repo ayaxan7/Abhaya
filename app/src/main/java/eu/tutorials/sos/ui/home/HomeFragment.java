@@ -1,6 +1,7 @@
 package eu.tutorials.sos.ui.home;
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 
@@ -14,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
@@ -101,8 +103,6 @@ public class HomeFragment extends Fragment {
                                         if (task.isSuccessful()) {
                                             String idToken = task.getResult().getToken();
                                             new SendSosTask(idToken, name, phone, latitude, longitude, timestamp).execute();
-
-                                            // Update Firestore with the latest location and timestamp
                                             FirebaseFirestore firestore = FirebaseFirestore.getInstance();
                                             String uid = user.getUid();
 
@@ -199,5 +199,19 @@ public class HomeFragment extends Fragment {
             }
         }
     }
+    @Override
+    public void onResume() {
+        super.onResume();
+        requireActivity().getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.addCategory(Intent.CATEGORY_HOME);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+        });
+    }
+
 }
 

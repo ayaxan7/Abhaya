@@ -87,7 +87,6 @@ public class Register extends AppCompatActivity {
                 gender1 = "Female";
             }
 
-            // Validate other fields
             if (name1.isEmpty() || email1.isEmpty() || password1.isEmpty() || phone1.isEmpty() || gender1.isEmpty()) {
                 Toast.makeText(Register.this, "Enter all fields", Toast.LENGTH_SHORT).show();
                 bar.setVisibility(View.GONE);

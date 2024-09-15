@@ -87,7 +87,7 @@
         android:background="@drawable/background_custom"
         android:ems="10"
         android:hint="Enter Your Phone Number"
-        android:inputType="text" />
+        android:inputType="number" />
 
     <TextView
         android:id="@+id/textView6"
@@ -105,7 +105,7 @@
         android:background="@drawable/background_custom"
         android:ems="10"
         android:hint="Enter your email id"
-        android:inputType="text" />
+        android:inputType="textEmailAddress" />
 
     <TextView
         android:id="@+id/textView7"

@@ -1,5 +1,7 @@
 package eu.tutorials.sos;
 
+import static androidx.core.app.ActivityCompat.finishAffinity;
+
 import android.Manifest;
 import android.content.Intent;
 
@@ -43,6 +45,7 @@ import java.io.IOException;
 
 
 import eu.tutorials.sos.databinding.ActivityMainBinding;
+import eu.tutorials.sos.ui.home.HomeFragment;
 import okhttp3.Call;
 import okhttp3.Callback;
 
@@ -322,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void logout() {
         mAuth.signOut();
-        startActivity(new Intent(this, Login.class));
+        startActivity(new Intent(this, register_btn.class));
         finish();
     }
 
