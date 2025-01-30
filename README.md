@@ -1,6 +1,6 @@
 # Abhaya - SOS Emergency App
 
-Abhaya is an Android-based **SOS emergency application** designed to help users quickly send alerts and share their live location with emergency contacts during distress situations. Built using **Java, XML, and Firebase**, the app ensures real-time communication and tracking for enhanced safety.
+Abhaya is an Android-based **SOS emergency application** designed for **Smart India Hackathon 2024** under the problem statement **Women's Safety Analytics**. The goal of this project is to **empower women and make them feel safer in society** by providing a quick and efficient emergency alert system. Built using **Java, XML, and Firebase**, the app ensures real-time communication and tracking for enhanced safety.
 
 ## 📌 Features
 
@@ -14,12 +14,12 @@ Abhaya is an Android-based **SOS emergency application** designed to help users 
 - **Firebase Authentication** - Secure user login and registration for personalized safety settings.
 
 ## 🛠 Tech Stack
-- **Java** & **XML** (Traditional Android UI)
-- **Firebase Realtime Database** (Stores emergency contacts and user details)
-- **Firestore** (Handles real-time location updates)
-- **Firebase Cloud Messaging (FCM)** (For notifications)
-- **OkHttp** (For HTTP requests to send SOS data)
-- **Navigation Drawer** (User-friendly navigation)
+- **Java** & **XML** - Basic tech stack for the UI and functionalities just like traditional Android applications
+- **Firebase Realtime Database** - Stores emergency contacts of each user and user details
+- **Firestore** - Handles real-time location updates
+- **Firebase Cloud Messaging (FCM)** - For notifications
+- **OkHttp** - For HTTP requests to send SOS data
+- **Navigation Drawer** - User-friendly navigation
 
 ## 🚀 Setup & Installation
 1. Clone the repository:
@@ -36,7 +36,6 @@ Abhaya is an Android-based **SOS emergency application** designed to help users 
 - **WearOS Companion App** for quick access.
 - **AI-based Incident Detection** using sensor data.
 - **Voice Command Trigger** for hands-free emergency activation.
-
 
 ---
 Made with ❤️ by your friendly neighbourhood crazy coder
